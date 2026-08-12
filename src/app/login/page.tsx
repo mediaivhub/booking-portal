@@ -36,61 +36,93 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl"
-            style={{ background: "var(--primary)" }}
-          >
-            IV
-          </div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--primary)" }}>
-            IV Hub
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
-            Booking Assignment Portal
-          </p>
-        </div>
+  const inputStyle: React.CSSProperties = {
+    padding: "12px 14px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--border)",
+    fontSize: "15px",
+    color: "var(--text-1)",
+    background: "var(--bg-card)",
+    outline: "none",
+    transition: "border-color 0.15s",
+    WebkitAppearance: "none",
+  };
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-3)" }}>
-              Email
-            </label>
+  const labelStyle: React.CSSProperties = {
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "var(--text-2)",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  };
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: "var(--bg)", padding: "20px" }}
+    >
+      <div
+        className="w-full text-center"
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: "20px",
+          padding: "36px 28px",
+          maxWidth: "380px",
+          boxShadow: "var(--shadow-md)",
+        }}
+      >
+        <div style={{ marginBottom: "16px" }}>
+          <svg
+            viewBox="0 0 24 24"
+            width="40"
+            height="40"
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth={1.5}
+            style={{ margin: "0 auto" }}
+          >
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        </div>
+        <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--primary)", letterSpacing: "-0.02em", marginBottom: "4px" }}>
+          IV Wellness Lounge
+        </h1>
+        <p style={{ fontSize: "13px", color: "var(--text-3)", marginBottom: "24px" }}>
+          Booking Assignment Portal
+        </p>
+
+        <form onSubmit={handleSubmit} className="flex flex-col text-left" style={{ gap: "14px" }}>
+          <div className="flex flex-col" style={{ gap: "5px" }}>
+            <label style={labelStyle}>Email / Username</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2"
-              style={{
-                background: "var(--bg-card)",
-                borderColor: "var(--border)",
-                color: "var(--text-1)",
-              }}
+              style={inputStyle}
               placeholder="you@ivhub.com"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-3)" }}>
-              Password
-            </label>
+          <div className="flex flex-col" style={{ gap: "5px" }}>
+            <label style={labelStyle}>Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2"
-              style={{
-                background: "var(--bg-card)",
-                borderColor: "var(--border)",
-                color: "var(--text-1)",
-              }}
+              style={inputStyle}
               placeholder="••••••••"
             />
+          </div>
+
+          <div className="flex flex-col" style={{ gap: "5px" }}>
+            <label style={labelStyle}>Login As</label>
+            <select style={inputStyle} defaultValue="admin">
+              <option value="admin">Admin</option>
+              <option value="nurse">Nurse</option>
+            </select>
           </div>
 
           {error && (
@@ -100,8 +132,14 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl text-white font-semibold transition-opacity disabled:opacity-50"
-            style={{ background: "var(--primary)" }}
+            className="w-full font-semibold text-white transition-opacity disabled:opacity-50"
+            style={{
+              background: "var(--primary)",
+              borderRadius: "var(--radius-sm)",
+              padding: "14px",
+              fontSize: "16px",
+              marginTop: "4px",
+            }}
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
