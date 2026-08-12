@@ -14,33 +14,35 @@ export async function GET(req: NextRequest) {
   const service = searchParams.get("service");
   const dateFrom = searchParams.get("dateFrom");
   const dateTo = searchParams.get("dateTo");
+  const pageParam = searchParams.get("page");
+  const limitParam = searchParams.get("limit");
+  const paginated = pageParam !== null || limitParam !== null;
+  const page = Math.max(1, parseInt(pageParam || "1") || 1);
+  const limit = Math.max(1, Math.min(100, parseInt(limitParam || "20") || 20));
 
-  const where: Record<string, unknown> = {};
-
-  if (status && status !== "all") {
-    where.status = status;
-  }
+  // Filters shared by both the paginated list and the status-breakdown counts.
+  const baseWhere: Record<string, unknown> = {};
 
   if (nurseId) {
-    where.nurseId = parseInt(nurseId);
+    baseWhere.nurseId = parseInt(nurseId);
   }
 
   if (service) {
-    where.service = service;
+    baseWhere.service = service;
   }
 
   if (dateFrom || dateTo) {
-    where.bookingDate = {};
-    if (dateFrom) (where.bookingDate as Record<string, unknown>).gte = new Date(dateFrom);
-    if (dateTo) (where.bookingDate as Record<string, unknown>).lte = new Date(dateTo);
+    baseWhere.bookingDate = {};
+    if (dateFrom) (baseWhere.bookingDate as Record<string, unknown>).gte = new Date(dateFrom);
+    if (dateTo) (baseWhere.bookingDate as Record<string, unknown>).lte = new Date(dateTo);
   }
 
   if (session.user.role === "nurse") {
-    where.nurseId = parseInt(session.user.id);
+    baseWhere.nurseId = parseInt(session.user.id);
   }
 
   if (search) {
-    where.OR = [
+    baseWhere.OR = [
       { taskId: { contains: search } },
       { orderId: { contains: search } },
       { address: { contains: search } },
@@ -51,16 +53,69 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  const bookings = await prisma.booking.findMany({
-    where,
-    include: {
-      client: true,
-      nurse: { select: { id: true, name: true, initials: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // The list itself is further narrowed by status; the counts below intentionally
+  // ignore status so the filter-pill badges always reflect true totals.
+  // A comma-separated status list (e.g. "completed,cancelled") matches any of them.
+  let where = baseWhere;
+  if (status && status !== "all") {
+    const statuses = status.split(",");
+    where = statuses.length > 1 ? { ...baseWhere, status: { in: statuses } } : { ...baseWhere, status };
+  }
 
-  return Response.json(bookings);
+  if (!paginated) {
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        client: true,
+        nurse: { select: { id: true, name: true, initials: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return Response.json(bookings);
+  }
+
+  const [data, total, statusGroups, serviceGroups] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      include: {
+        client: true,
+        nurse: { select: { id: true, name: true, initials: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.booking.count({ where }),
+    prisma.booking.groupBy({
+      by: ["status"],
+      where: baseWhere,
+      _count: true,
+    }),
+    prisma.booking.findMany({
+      where: { ...baseWhere, service: { not: null } },
+      distinct: ["service"],
+      select: { service: true },
+      orderBy: { service: "asc" },
+    }),
+  ]);
+
+  const services = serviceGroups.map((s) => s.service).filter((s): s is string => !!s);
+
+  const counts: Record<string, number> = {
+    all: 0,
+    unassigned: 0,
+    assigned: 0,
+    ontheway: 0,
+    progress: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+  for (const g of statusGroups) {
+    counts[g.status] = g._count;
+    counts.all += g._count;
+  }
+
+  return Response.json({ data, total, page, limit, counts, services });
 }
 
 export async function POST(req: NextRequest) {
@@ -86,14 +141,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const lastBooking = await prisma.booking.findFirst({
-    orderBy: { taskId: "desc" },
-  });
-  const nextTaskNum =
-    lastBooking && lastBooking.taskId.startsWith("#")
-      ? parseInt(lastBooking.taskId.slice(1)) + 1
-      : 100000;
-  const taskId = `#${nextTaskNum}`;
+  const { _max } = await prisma.booking.aggregate({ _max: { id: true } });
+  const taskId = `#${100000 + (_max.id ?? 0) + 1}`;
 
   const booking = await prisma.booking.create({
     data: {

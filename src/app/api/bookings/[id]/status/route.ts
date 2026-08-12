@@ -36,6 +36,17 @@ export async function PATCH(
     }
   }
 
+  if (booking.status === status) {
+    const unchanged = await prisma.booking.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        client: true,
+        nurse: { select: { id: true, name: true, initials: true } },
+      },
+    });
+    return Response.json(unchanged);
+  }
+
   const statusLabels: Record<string, string> = {
     unassigned: "Unassigned",
     assigned: "Assigned",

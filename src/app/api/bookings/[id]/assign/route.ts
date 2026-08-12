@@ -15,6 +15,20 @@ export async function PATCH(
   const { id } = await params;
   const { nurseId } = await req.json();
 
+  const existing = await prisma.booking.findUnique({ where: { id: parseInt(id) } });
+  if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
+
+  if (existing.nurseId === (nurseId || null)) {
+    const unchanged = await prisma.booking.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        client: true,
+        nurse: { select: { id: true, name: true, initials: true } },
+      },
+    });
+    return Response.json(unchanged);
+  }
+
   const nurse = nurseId
     ? await prisma.user.findUnique({ where: { id: nurseId } })
     : null;

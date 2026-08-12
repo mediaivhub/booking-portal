@@ -6,10 +6,12 @@ import bcrypt from "bcryptjs";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "admin") {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const nurses = await prisma.user.findMany({
-    where: { role: "nurse", isActive: true },
+    where: { role: "nurse" },
     select: {
       id: true,
       name: true,
@@ -17,12 +19,33 @@ export async function GET() {
       phone: true,
       initials: true,
       team: true,
-      _count: { select: { bookings: true } },
+      isActive: true,
     },
     orderBy: { name: "asc" },
   });
 
-  return Response.json(nurses);
+  const statusGroups = await prisma.booking.groupBy({
+    by: ["nurseId", "status"],
+    where: { nurseId: { in: nurses.map((n) => n.id) } },
+    _count: true,
+  });
+
+  const statsByNurse = new Map<number, { active: number; done: number; total: number }>();
+  for (const g of statusGroups) {
+    if (g.nurseId === null) continue;
+    const s = statsByNurse.get(g.nurseId) || { active: 0, done: 0, total: 0 };
+    if (g.status === "assigned" || g.status === "ontheway" || g.status === "progress") s.active += g._count;
+    if (g.status === "completed") s.done += g._count;
+    s.total += g._count;
+    statsByNurse.set(g.nurseId, s);
+  }
+
+  const result = nurses.map((n) => ({
+    ...n,
+    _count: statsByNurse.get(n.id) || { active: 0, done: 0, total: 0 },
+  }));
+
+  return Response.json(result);
 }
 
 export async function POST(req: NextRequest) {

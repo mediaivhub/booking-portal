@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
+import DatePicker from "./DatePicker";
+import Select from "./Select";
 
 interface Nurse {
   id: number;
@@ -15,19 +17,37 @@ interface Props {
   onCreated: () => void;
 }
 
+const TIME_SLOTS = [
+  "09:00 AM - 09:30 AM",
+  "09:30 AM - 10:00 AM",
+  "10:00 AM - 10:30 AM",
+  "10:30 AM - 11:00 AM",
+  "11:00 AM - 11:30 AM",
+  "12:00 PM - 12:30 PM",
+  "01:00 PM - 01:30 PM",
+  "02:00 PM - 02:30 PM",
+  "03:00 PM - 03:30 PM",
+  "04:00 PM - 04:30 PM",
+  "05:00 PM - 05:30 PM",
+];
+
+const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
+
+const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Insurance", "Bank Transfer"];
+
 export default function CreateBookingModal({ nurses, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     clientName: "",
     clientPhone: "",
     clientEmail: "",
-    service: "",
-    address: "",
-    description: "",
-    timeSlot: "",
-    bookingDate: "",
-    paymentMethod: "",
     orderId: "",
+    address: "",
+    bookingDate: "",
+    timeSlot: TIME_SLOTS[0],
+    service: SERVICES[0],
     nurseId: "",
+    description: "",
+    paymentMethod: PAYMENT_METHODS[0],
   });
   const [loading, setLoading] = useState(false);
 
@@ -66,37 +86,41 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
       >
         <div className="sticky top-0 p-4 border-b" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
           <div className="w-10 h-1 rounded-full mx-auto mb-3" style={{ background: "var(--border)" }} />
-          <h3 className="text-lg font-bold" style={{ color: "var(--primary)" }}>New Booking</h3>
+          <h3 className="text-lg font-bold" style={{ color: "var(--text-1)" }}>New Booking</h3>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <FormField label="Client Name *" value={form.clientName} onChange={(v) => update("clientName", v)} />
-          <FormField label="Client Phone" value={form.clientPhone} onChange={(v) => update("clientPhone", v)} />
-          <FormField label="Client Email" value={form.clientEmail} onChange={(v) => update("clientEmail", v)} type="email" />
-          <FormField label="Service" value={form.service} onChange={(v) => update("service", v)} />
-          <FormField label="Order ID" value={form.orderId} onChange={(v) => update("orderId", v)} />
-          <FormField label="Address" value={form.address} onChange={(v) => update("address", v)} />
-          <FormField label="Description" value={form.description} onChange={(v) => update("description", v)} multiline />
-          <FormField label="Time Slot" value={form.timeSlot} onChange={(v) => update("timeSlot", v)} placeholder="e.g. 06:00 PM - 07:00 PM" />
-          <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
-          <FormField label="Payment Method" value={form.paymentMethod} onChange={(v) => update("paymentMethod", v)} />
-
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-3)" }}>
-              Assign Nurse
-            </label>
-            <select
-              value={form.nurseId}
-              onChange={(e) => update("nurseId", e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
-              style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
-            >
-              <option value="">Unassigned</option>
-              {nurses.map((n) => (
-                <option key={n.id} value={n.id}>{n.name}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Client Name *" value={form.clientName} onChange={(v) => update("clientName", v)} placeholder="e.g. Fatma" />
+            <FormField label="Phone" value={form.clientPhone} onChange={(v) => update("clientPhone", v)} placeholder="+971..." />
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Email" value={form.clientEmail} onChange={(v) => update("clientEmail", v)} type="email" placeholder="client@email.com" />
+            <FormField label="Order ID" value={form.orderId} onChange={(v) => update("orderId", v)} placeholder="e.g. IV" />
+          </div>
+
+          <FormField label="Address" value={form.address} onChange={(v) => update("address", v)} placeholder="Full address in Dubai" />
+
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
+            <FormField label="Time Slot" value={form.timeSlot} onChange={(v) => update("timeSlot", v)} options={TIME_SLOTS} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Service" value={form.service} onChange={(v) => update("service", v)} options={SERVICES} />
+            <FormField
+              label="Assign Nurse"
+              value={form.nurseId}
+              onChange={(v) => update("nurseId", v)}
+              options={["— Unassigned —", ...nurses.map((n) => n.name)]}
+              optionValues={["", ...nurses.map((n) => String(n.id))]}
+            />
+          </div>
+
+          <FormField label="Notes" value={form.description} onChange={(v) => update("description", v)} multiline placeholder="Special instructions..." />
+
+          <FormField label="Payment" value={form.paymentMethod} onChange={(v) => update("paymentMethod", v)} options={PAYMENT_METHODS} />
 
           <button
             type="submit"
@@ -119,6 +143,8 @@ function FormField({
   type = "text",
   multiline,
   placeholder,
+  options,
+  optionValues,
 }: {
   label: string;
   value: string;
@@ -126,20 +152,39 @@ function FormField({
   type?: string;
   multiline?: boolean;
   placeholder?: string;
+  options?: string[];
+  optionValues?: string[];
 }) {
+  const fieldStyle = { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" };
+
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-3)" }}>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
         {label}
       </label>
-      {multiline ? (
+      {options ? (
+        <Select
+          value={value}
+          onChange={onChange}
+          options={options.map((opt, i) => ({ label: opt, value: optionValues ? optionValues[i] : opt }))}
+          className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+          style={fieldStyle}
+        />
+      ) : type === "date" ? (
+        <DatePicker
+          value={value}
+          onChange={onChange}
+          className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+          style={fieldStyle}
+        />
+      ) : multiline ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={2}
           placeholder={placeholder}
           className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
-          style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
+          style={fieldStyle}
         />
       ) : (
         <input
@@ -148,7 +193,7 @@ function FormField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
-          style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
+          style={fieldStyle}
         />
       )}
     </div>

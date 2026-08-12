@@ -15,8 +15,10 @@ export interface BookingData {
   bookingDate?: string;
   paymentMethod?: string;
   trackingLink?: string;
+  createdAt?: string;
+  updatedAt?: string;
   client: { id: number; name: string; phone?: string; email?: string };
-  nurse?: { id: number; name: string; initials?: string } | null;
+  nurse?: { id: number; name: string; initials?: string; phone?: string | null } | null;
 }
 
 interface Props {
@@ -25,6 +27,8 @@ interface Props {
   onDetail: (booking: BookingData) => void;
   onAssign?: (booking: BookingData) => void;
   onStatus?: (booking: BookingData) => void;
+  /** Read-only card for archival views (e.g. History) — no Assign/Status actions, shows service name instead. */
+  readOnly?: boolean;
 }
 
 export default function BookingCard({
@@ -33,6 +37,7 @@ export default function BookingCard({
   onDetail,
   onAssign,
   onStatus,
+  readOnly,
 }: Props) {
   const initials = booking.nurse?.initials ||
     booking.nurse?.name
@@ -106,7 +111,7 @@ export default function BookingCard({
             </div>
             <span className="text-xs font-medium">{booking.nurse.name}</span>
           </div>
-        ) : isAdmin ? (
+        ) : isAdmin && !readOnly ? (
           <button
             className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
             style={{ background: "var(--accent)" }}
@@ -121,17 +126,23 @@ export default function BookingCard({
           <span className="text-xs" style={{ color: "var(--text-3)" }}>Unassigned</span>
         )}
 
-        {canChangeStatus && (
-          <button
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onStatus?.(booking);
-            }}
-          >
-            Status ▾
-          </button>
+        {readOnly ? (
+          booking.service && (
+            <span className="text-xs" style={{ color: "var(--text-3)" }}>{booking.service}</span>
+          )
+        ) : (
+          canChangeStatus && (
+            <button
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatus?.(booking);
+              }}
+            >
+              Status ▾
+            </button>
+          )
         )}
       </div>
     </div>

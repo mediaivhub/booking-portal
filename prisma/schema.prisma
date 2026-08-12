@@ -21,7 +21,7 @@ model User {
 
   bookings Booking[] @relation("NurseBookings")
 
-  @@map("users")
+  @@map("bk_users")
 }
 
 model Client {
@@ -34,7 +34,7 @@ model Client {
 
   bookings Booking[]
 
-  @@map("clients")
+  @@map("bk_clients")
 }
 
 model Booking {
@@ -61,7 +61,7 @@ model Booking {
   nurse   User?            @relation("NurseBookings", fields: [nurseId], references: [id])
   history BookingHistory[]
 
-  @@map("bookings")
+  @@map("bk_bookings")
 }
 
 model BookingHistory {
@@ -73,7 +73,7 @@ model BookingHistory {
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  @@map("booking_history")
+  @@map("bk_booking_history")
 }
 
 model Service {
@@ -82,7 +82,7 @@ model Service {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("services")
+  @@map("bk_services")
 }
 
 enum UserRole {

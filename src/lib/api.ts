@@ -51,5 +51,9 @@ export const api = {
       request("/nurses", { method: "POST", body: JSON.stringify(data) }),
     remove: (id: number) =>
       request(`/nurses?id=${id}`, { method: "DELETE" }),
+    setActive: (id: number, isActive: boolean) =>
+      request(`/nurses/${id}`, { method: "PATCH", body: JSON.stringify({ isActive }) }),
+    resetPassword: (id: number, password: string) =>
+      request(`/nurses/${id}`, { method: "PATCH", body: JSON.stringify({ password }) }),
   },
 };

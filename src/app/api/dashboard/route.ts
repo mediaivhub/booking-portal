@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || session.user.role !== "admin") {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const [total, unassigned, assigned, ontheway, progress, completed, cancelled] =
     await Promise.all([

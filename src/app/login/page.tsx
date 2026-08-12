@@ -117,6 +117,9 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Login As selector removed — real role comes from the authenticated
+              account and the redirect below already routes admin/nurse correctly.
+              This was purely cosmetic to match the design mockup, never functional.
           <div className="flex flex-col" style={{ gap: "5px" }}>
             <label style={labelStyle}>Login As</label>
             <select style={inputStyle} defaultValue="admin">
@@ -124,6 +127,7 @@ export default function LoginPage() {
               <option value="nurse">Nurse</option>
             </select>
           </div>
+          */}
 
           {error && (
             <p className="text-sm text-red-500 text-center">{error}</p>
