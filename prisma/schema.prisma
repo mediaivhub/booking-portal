@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(150)
+  phone        String?   @db.VarChar(20)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         UserRole
+  team         String    @default("Nurses") @db.VarChar(50)
+  initials     String?   @db.VarChar(5)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  bookings Booking[] @relation("NurseBookings")
+
+  @@map("users")
+}
+
+model Client {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  phone     String?   @db.VarChar(20)
+  email     String?   @db.VarChar(150)
+  address   String?   @db.Text
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  bookings Booking[]
+
+  @@map("clients")
+}
+
+model Booking {
+  id            Int           @id @default(autoincrement())
+  taskId        String        @unique @map("task_id") @db.VarChar(20)
+  jobId         String?       @map("job_id") @db.VarChar(20)
+  orderId       String?       @map("order_id") @db.VarChar(50)
+  clientId      Int           @map("client_id")
+  nurseId       Int?          @map("nurse_id")
+  status        BookingStatus @default(unassigned)
+  service       String?       @db.VarChar(100)
+  address       String?       @db.Text
+  description   String?       @db.Text
+  timeSlot      String?       @map("time_slot") @db.VarChar(50)
+  bookingDate   DateTime?     @map("booking_date") @db.Date
+  paymentMethod String?       @map("payment_method") @db.VarChar(50)
+  trackingLink  String?       @map("tracking_link") @db.VarChar(500)
+  distance      Decimal?      @db.Decimal(5, 2)
+  timeTaken     Decimal?      @map("time_taken") @db.Decimal(5, 2)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  client  Client           @relation(fields: [clientId], references: [id])
+  nurse   User?            @relation("NurseBookings", fields: [nurseId], references: [id])
+  history BookingHistory[]
+
+  @@map("bookings")
+}
+
+model BookingHistory {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int      @map("booking_id")
+  action      String   @db.VarChar(255)
+  performedBy String?  @map("performed_by") @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_history")
+}
+
+model Service {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("services")
+}
+
+enum UserRole {
+  admin
+  nurse
+}
+
+enum BookingStatus {
+  unassigned
+  assigned
+  ontheway
+  progress
+  completed
+  cancelled
+}

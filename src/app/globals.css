@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary: #1b4332;
+  --primary-light: #2d6a4f;
+  --accent: #d4a574;
+  --accent-light: #e8c9a0;
+  --bg: #f4f1ec;
+  --bg-card: #ffffff;
+  --text-1: #1a1a1a;
+  --text-2: #4a4a4a;
+  --text-3: #8a8a8a;
+  --border: #e5e0d8;
+  --status-unassigned: #94a3b8;
+  --status-assigned: #3b82f6;
+  --status-ontheway: #f59e0b;
+  --status-progress: #8b5cf6;
+  --status-completed: #22c55e;
+  --status-cancelled: #ef4444;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #1a1a1a;
+    --bg-card: #262626;
+    --text-1: #f0ece6;
+    --text-2: #c0b8ac;
+    --text-3: #7a7570;
+    --border: #3a3530;
   }
 }
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
