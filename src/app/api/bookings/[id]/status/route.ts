@@ -74,15 +74,15 @@ export async function PATCH(
     },
   });
 
-  if (session.user.role === "nurse" && (status === "completed" || status === "cancelled")) {
+  if (session.user.role === "nurse") {
     await sendPushToAdmins({
-      title: status === "completed" ? "Booking completed" : "Booking cancelled",
-      body: `${updated.taskId} · ${updated.client.name} · by ${session.user.name}`,
+      title: "Booking status updated",
+      body: `${updated.taskId} · ${updated.client.name} · now ${statusLabels[status]} · by ${session.user.name}`,
       url: "/admin",
     });
   } else if (session.user.role === "admin" && updated.nurseId) {
     await sendPushToUsers([updated.nurseId], {
-      title: "Booking status updated",
+      title: "Booking status updated",  
       body: `${updated.taskId} · ${updated.client.name} · now ${statusLabels[status]}`,
       url: "/nurse",
     });
