@@ -83,9 +83,9 @@ export default function AdminPage() {
   const loadUpcoming = useCallback(async () => {
     const params: Record<string, string> = {
       dateFrom: todayISO,
-      // Home only ever shows non-completed work — completed bookings belong
-      // in History — so "all" here means all-but-completed, not every status.
-      status: homeFilter === "all" ? "unassigned,assigned,ontheway,progress,cancelled" : homeFilter,
+      // Home only shows active work — completed and cancelled bookings
+      // belong in History — so "all" here excludes both of those.
+      status: homeFilter === "all" ? "unassigned,assigned,ontheway,progress" : homeFilter,
       page: String(upcomingPage),
       limit: String(PAGE_SIZE),
     };
@@ -94,7 +94,7 @@ export default function AdminPage() {
     setUpcomingTotal(res.total);
     setHomeCounts({
       ...res.counts,
-      all: (res.counts.unassigned || 0) + (res.counts.assigned || 0) + (res.counts.ontheway || 0) + (res.counts.progress || 0) + (res.counts.cancelled || 0),
+      all: (res.counts.unassigned || 0) + (res.counts.assigned || 0) + (res.counts.ontheway || 0) + (res.counts.progress || 0),
     });
     setUpcomingLoaded(true);
   }, [upcomingPage, homeFilter, todayISO]);
