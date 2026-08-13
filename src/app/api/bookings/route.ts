@@ -42,14 +42,39 @@ export async function GET(req: NextRequest) {
   }
 
   if (search) {
+    // Client/nurse matches are resolved via separate single-table queries
+    // rather than a Prisma relation filter (`client: { name: { contains } }`),
+    // which would join bk_bookings to bk_clients/bk_users inside one query.
+    // Prisma's MariaDB adapter binds string params over the binary protocol
+    // without an explicit collation, which MariaDB treats as utf8mb4_bin —
+    // joining that against this database's utf8mb4_unicode_ci columns in a
+    // LIKE trips error 1267 ("Illegal mix of collations"). Resolving IDs
+    // first keeps every LIKE comparison within a single table.
+    const [matchingClients, matchingNurses] = await Promise.all([
+      prisma.client.findMany({
+        where: {
+          OR: [
+            { name: { contains: search } },
+            { phone: { contains: search } },
+            { email: { contains: search } },
+          ],
+        },
+        select: { id: true },
+      }),
+      prisma.user.findMany({
+        where: { role: "nurse", name: { contains: search } },
+        select: { id: true },
+      }),
+    ]);
+
     baseWhere.OR = [
       { taskId: { contains: search } },
       { orderId: { contains: search } },
       { address: { contains: search } },
       { description: { contains: search } },
       { service: { contains: search } },
-      { client: { name: { contains: search } } },
-      { client: { phone: { contains: search } } },
+      ...(matchingClients.length ? [{ clientId: { in: matchingClients.map((c) => c.id) } }] : []),
+      ...(matchingNurses.length ? [{ nurseId: { in: matchingNurses.map((n) => n.id) } }] : []),
     ];
   }
 
