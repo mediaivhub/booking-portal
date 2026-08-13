@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendPushToAdmins, sendPushToUsers } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function PATCH(
@@ -72,6 +73,20 @@ export async function PATCH(
       performedBy: session.user.name,
     },
   });
+
+  if (session.user.role === "nurse" && (status === "completed" || status === "cancelled")) {
+    await sendPushToAdmins({
+      title: status === "completed" ? "Booking completed" : "Booking cancelled",
+      body: `${updated.taskId} · ${updated.client.name} · by ${session.user.name}`,
+      url: "/admin",
+    });
+  } else if (session.user.role === "admin" && updated.nurseId) {
+    await sendPushToUsers([updated.nurseId], {
+      title: "Booking status updated",
+      body: `${updated.taskId} · ${updated.client.name} · now ${statusLabels[status]}`,
+      url: "/nurse",
+    });
+  }
 
   return Response.json(updated);
 }
