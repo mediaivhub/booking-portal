@@ -151,7 +151,7 @@ export default function NursePage() {
 
               {/* Filter pills */}
               <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
-                {["all", "assigned", "ontheway", "progress", "completed"].map((f) => (
+                {["all", "ontheway", "progress"].map((f) => (
                   <button
                     key={f}
                     className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
@@ -162,7 +162,7 @@ export default function NursePage() {
                     }}
                     onClick={() => setHomeFilter(f)}
                   >
-                    {f === "all" ? "All" : f === "ontheway" ? "On Way" : f === "progress" ? "Active" : f.charAt(0).toUpperCase() + f.slice(1)}
+                    {f === "all" ? "All" : f === "ontheway" ? "On Way" : "Active"}
                     <span className="ml-1 opacity-70">{homeCounts[f] ?? 0}</span>
                   </button>
                 ))}

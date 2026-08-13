@@ -82,14 +82,19 @@ export default function AdminPage() {
   const loadUpcoming = useCallback(async () => {
     const params: Record<string, string> = {
       dateFrom: todayISO,
+      // Home only ever shows non-completed work — completed bookings belong
+      // in History — so "all" here means all-but-completed, not every status.
+      status: homeFilter === "all" ? "unassigned,assigned,ontheway,progress,cancelled" : homeFilter,
       page: String(upcomingPage),
       limit: String(PAGE_SIZE),
     };
-    if (homeFilter !== "all") params.status = homeFilter;
     const res = await api.bookings.list(params);
     setUpcoming(res.data);
     setUpcomingTotal(res.total);
-    setHomeCounts(res.counts);
+    setHomeCounts({
+      ...res.counts,
+      all: (res.counts.unassigned || 0) + (res.counts.assigned || 0) + (res.counts.ontheway || 0) + (res.counts.progress || 0) + (res.counts.cancelled || 0),
+    });
     setUpcomingLoaded(true);
   }, [upcomingPage, homeFilter, todayISO]);
 
@@ -246,7 +251,7 @@ export default function AdminPage() {
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {["all", "unassigned", "assigned", "ontheway", "progress", "completed"].map((f) => (
+        {["all", "unassigned", "assigned", "ontheway", "progress", "completed", "cancelled"].map((f) => (
           <button
             key={f}
             className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -445,7 +450,7 @@ export default function AdminPage() {
 
             {/* Filter pills */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {["all", "unassigned", "assigned", "ontheway", "progress", "completed"].map((f) => (
+              {["all", "unassigned", "assigned", "ontheway", "progress"].map((f) => (
                 <button
                   key={f}
                   className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
