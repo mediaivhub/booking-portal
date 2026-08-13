@@ -251,7 +251,7 @@ export default function AdminPage() {
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {["all", "unassigned", "assigned", "ontheway", "progress", "completed", "cancelled"].map((f) => (
+        {["all", "unassigned", "assigned", "ontheway", "completed", "cancelled"].map((f) => (
           <button
             key={f}
             className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -450,7 +450,7 @@ export default function AdminPage() {
 
             {/* Filter pills */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {["all", "unassigned", "assigned", "ontheway", "progress"].map((f) => (
+              {["all", "unassigned", "assigned", "ontheway"].map((f) => (
                 <button
                   key={f}
                   className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"

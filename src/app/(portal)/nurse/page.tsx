@@ -151,7 +151,7 @@ export default function NursePage() {
 
               {/* Filter pills */}
               <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
-                {["all", "ontheway", "progress"].map((f) => (
+                {["all", "ontheway"].map((f) => (
                   <button
                     key={f}
                     className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
