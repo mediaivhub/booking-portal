@@ -47,7 +47,7 @@ export default function NursePage() {
     if (status !== "authenticated") return;
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") loadBookings();
-    }, 5000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [status, loadBookings]);
 

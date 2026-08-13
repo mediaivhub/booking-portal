@@ -164,7 +164,7 @@ export default function AdminPage() {
       loadDashboard();
       if (page === "home") loadUpcoming();
       else if (page === "history") loadBookings();
-    }, 5000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [status, page, loadUpcoming, loadBookings, loadDashboard]);
 
