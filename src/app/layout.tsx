@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "IV Hub · Booking Portal",
   description: "IV Wellness Lounge Clinic — Booking Assignment Portal",
   robots: { index: false, follow: false },
+  appleWebApp: {
+    capable: true,
+    title: "IV Hub",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
