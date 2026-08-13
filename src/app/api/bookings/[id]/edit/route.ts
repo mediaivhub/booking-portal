@@ -20,9 +20,9 @@ export async function PATCH(
   });
   if (!booking) return Response.json({ error: "Not found" }, { status: 404 });
 
-  if (booking.status === "completed" || booking.status === "cancelled") {
+  if (booking.status === "cancelled") {
     return Response.json(
-      { error: "Cannot edit completed/cancelled bookings" },
+      { error: "Cannot edit cancelled bookings" },
       { status: 400 }
     );
   }

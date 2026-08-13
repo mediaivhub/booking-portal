@@ -48,7 +48,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
     );
   }
 
-  const canEdit = isAdmin && booking.status !== "completed" && booking.status !== "cancelled";
+  const canEdit = isAdmin && booking.status !== "cancelled";
 
   function startEdit() {
     setEditData({
