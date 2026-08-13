@@ -47,9 +47,6 @@ export default function BookingCard({
       .toUpperCase() ||
     "";
 
-  const canChangeStatus =
-    booking.status !== "completed" && booking.status !== "cancelled";
-
   return (
     <div
       className="rounded-2xl border p-4 cursor-pointer active:scale-[0.98] transition-transform"
@@ -131,18 +128,16 @@ export default function BookingCard({
             <span className="text-xs" style={{ color: "var(--text-3)" }}>{booking.service}</span>
           )
         ) : (
-          canChangeStatus && (
-            <button
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
-              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatus?.(booking);
-              }}
-            >
-              Status ▾
-            </button>
-          )
+          <button
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStatus?.(booking);
+            }}
+          >
+            Status ▾
+          </button>
         )}
       </div>
     </div>

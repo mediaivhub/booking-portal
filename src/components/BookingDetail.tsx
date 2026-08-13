@@ -254,18 +254,13 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             </div>
           </div>
           <div className="flex items-center gap-2 relative">
-            {booking.status !== "completed" && booking.status !== "cancelled" && (
-              <button
-                className="px-3 py-2 rounded-xl text-xs font-semibold text-white"
-                style={{ background: "var(--primary)" }}
-                onClick={() => setShowStatus(true)}
-              >
-                Update Status ▾
-              </button>
-            )}
-            {booking.status === "completed" && (
-              <span className="text-xs font-bold" style={{ color: "var(--status-completed)" }}>✓ Completed</span>
-            )}
+            <button
+              className="px-3 py-2 rounded-xl text-xs font-semibold text-white"
+              style={{ background: "var(--primary)" }}
+              onClick={() => setShowStatus(true)}
+            >
+              Update Status ▾
+            </button>
             {booking.nurse.phone ? (
               <a
                 href={`tel:${booking.nurse.phone}`}
