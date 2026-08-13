@@ -72,6 +72,15 @@ export default function NursePage() {
   const completed = bookings.filter((b) => b.status === "completed").length;
   const displayedBookings = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const upcomingBookings = bookings.filter(
+    (b) =>
+      b.status !== "completed" &&
+      b.status !== "cancelled" &&
+      (!b.bookingDate || new Date(b.bookingDate) >= startOfToday)
+  );
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Top Bar */}
@@ -125,11 +134,11 @@ export default function NursePage() {
               ))}
             </div>
 
-            {/* Today's / active bookings preview */}
+            {/* Current / upcoming bookings preview */}
             <div>
-              <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text-2)" }}>Your Active Bookings</h3>
+              <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text-2)" }}>Your Upcoming Bookings</h3>
               <div className="space-y-3">
-                {bookings.filter((b) => b.status !== "completed" && b.status !== "cancelled").slice(0, 5).map((b) => (
+                {upcomingBookings.slice(0, 5).map((b) => (
                   <BookingCard
                     key={b.id}
                     booking={b}
@@ -138,9 +147,9 @@ export default function NursePage() {
                     onStatus={(bk) => setStatusTarget(bk)}
                   />
                 ))}
-                {bookings.filter((b) => b.status !== "completed" && b.status !== "cancelled").length === 0 && (
+                {upcomingBookings.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-sm" style={{ color: "var(--text-3)" }}>No active bookings</p>
+                    <p className="text-sm" style={{ color: "var(--text-3)" }}>No upcoming bookings</p>
                   </div>
                 )}
               </div>
