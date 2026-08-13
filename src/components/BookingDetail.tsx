@@ -49,6 +49,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
   }
 
   const canEdit = isAdmin && booking.status !== "cancelled";
+  const createdBy = booking.history?.find((h) => h.action === "Booking created")?.performedBy;
 
   function startEdit() {
     setEditData({
@@ -158,6 +159,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             <DetailRow label="Service" value={booking.service} />
             <DetailRow label="Payment" value={booking.paymentMethod} />
             <DetailRow label="Created" value={booking.createdAt ? new Date(booking.createdAt).toLocaleString() : undefined} />
+            <DetailRow label="Created By" value={createdBy} />
             <DetailRow label="Last Updated" value={booking.updatedAt ? new Date(booking.updatedAt).toLocaleString() : undefined} />
 
             {booking.trackingLink && (
