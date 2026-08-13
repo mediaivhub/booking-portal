@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendPushToAdmins, sendPushToUsers } from "@/lib/push";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -196,6 +197,23 @@ export async function POST(req: NextRequest) {
       performedBy: session.user.name,
     },
   });
+
+  if (booking.nurseId) {
+    await sendPushToUsers([booking.nurseId], {
+      title: "New booking assigned",
+      body: `${booking.taskId} · ${booking.client.name} · ${booking.timeSlot || "No time set"}`,
+      url: "/nurse",
+    });
+  } else {
+    await sendPushToAdmins(
+      {
+        title: "New unassigned booking",
+        body: `${booking.taskId} · ${booking.client.name} needs a nurse assigned`,
+        url: "/admin",
+      },
+      parseInt(session.user.id)
+    );
+  }
 
   return Response.json(booking, { status: 201 });
 }

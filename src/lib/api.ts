@@ -56,4 +56,11 @@ export const api = {
     resetPassword: (id: number, password: string) =>
       request(`/nurses/${id}`, { method: "PATCH", body: JSON.stringify({ password }) }),
   },
+
+  push: {
+    subscribe: (subscription: PushSubscriptionJSON) =>
+      request("/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
+    unsubscribe: (endpoint: string) =>
+      request("/push/subscribe", { method: "DELETE", body: JSON.stringify({ endpoint }) }),
+  },
 };

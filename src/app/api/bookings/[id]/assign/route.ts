@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendPushToUsers } from "@/lib/push";
 import { NextRequest } from "next/server";
 
 export async function PATCH(
@@ -54,6 +55,14 @@ export async function PATCH(
       performedBy: session.user.name,
     },
   });
+
+  if (nurseId) {
+    await sendPushToUsers([nurseId], {
+      title: "New booking assigned",
+      body: `${updated.taskId} · ${updated.client.name} · ${updated.timeSlot || "No time set"}`,
+      url: "/nurse",
+    });
+  }
 
   return Response.json(updated);
 }

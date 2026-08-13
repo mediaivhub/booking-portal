@@ -28,4 +28,11 @@ const required = ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASS", "DB_NAME", "NEXTAU
 for (const name of required) {
   console.log(`${name}:`, has(name) ? "set" : "MISSING");
 }
+
+// Optional: push notifications silently no-op without these, so they don't
+// block a build, but it's worth flagging if they're missing.
+const optional = ["VAPID_PRIVATE_KEY", "NEXT_PUBLIC_VAPID_PUBLIC_KEY", "VAPID_SUBJECT"];
+for (const name of optional) {
+  console.log(`${name}:`, has(name) ? "set" : "not set (push notifications disabled)");
+}
 console.log("────────────────────────────\n");

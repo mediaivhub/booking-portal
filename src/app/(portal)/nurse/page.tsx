@@ -7,6 +7,7 @@ import BookingCard, { BookingData } from "@/components/BookingCard";
 import BookingDetail from "@/components/BookingDetail";
 import StatusDropdown from "@/components/StatusDropdown";
 import DatePicker from "@/components/DatePicker";
+import NotificationBell from "@/components/NotificationBell";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 
@@ -105,6 +106,7 @@ export default function NursePage() {
           >
             {session?.user?.initials || session?.user?.name?.split(" ").map((w) => w[0]).join("") || "N"}
           </div>
+          <NotificationBell />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="p-2 rounded-lg flex"

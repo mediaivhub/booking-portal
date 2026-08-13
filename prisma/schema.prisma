@@ -19,7 +19,8 @@ model User {
   isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at")
 
-  bookings Booking[] @relation("NurseBookings")
+  bookings          Booking[]          @relation("NurseBookings")
+  pushSubscriptions PushSubscription[]
 
   @@map("bk_users")
 }
@@ -83,6 +84,19 @@ model Service {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("bk_services")
+}
+
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  endpoint  String   @unique @db.VarChar(500)
+  p256dh    String   @db.VarChar(255)
+  auth      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bk_push_subscriptions")
 }
 
 enum UserRole {

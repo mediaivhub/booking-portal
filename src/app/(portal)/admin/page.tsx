@@ -14,6 +14,7 @@ import AddNurseModal from "@/components/AddNurseModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import DatePicker from "@/components/DatePicker";
 import Select from "@/components/Select";
+import NotificationBell from "@/components/NotificationBell";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 
@@ -402,6 +403,7 @@ export default function AdminPage() {
           >
             {session?.user?.initials || session?.user?.name?.split(" ").map((w) => w[0]).join("")}
           </div>
+          <NotificationBell />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="p-2 rounded-lg flex"
