@@ -79,6 +79,9 @@ export default function NursePage() {
     (b) => b.status !== "completed" && b.status !== "cancelled" && isCurrentOrUpcoming(b)
   );
 
+  const filterCounts: Record<string, number> = { all: bookings.length };
+  for (const b of bookings) filterCounts[b.status] = (filterCounts[b.status] ?? 0) + 1;
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Top Bar */}
@@ -185,6 +188,7 @@ export default function NursePage() {
                   onClick={() => setFilter(f)}
                 >
                   {f === "all" ? "All" : f === "ontheway" ? "On Way" : f === "progress" ? "Active" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  <span className="ml-1 opacity-70">{filterCounts[f] ?? 0}</span>
                 </button>
               ))}
             </div>
