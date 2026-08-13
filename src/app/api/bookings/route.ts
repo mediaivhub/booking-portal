@@ -205,7 +205,11 @@ export async function POST(req: NextRequest) {
       body: `${booking.taskId} · ${booking.client.name} · ${booking.timeSlot || "No time set"}`,
       url: "/nurse",
     });
-    await sendBookingAssignedEmail(booking.nurse.email, { ...booking, nurse: booking.nurse });
+    await sendBookingAssignedEmail(booking.nurse.email, {
+      ...booking,
+      nurse: booking.nurse,
+      createdBy: session.user.name,
+    });
   } else {
     await sendPushToAdmins(
       {
