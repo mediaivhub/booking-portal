@@ -95,7 +95,7 @@ export default function NursePage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       {/* Top Bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4" style={{ background: "var(--primary)", height: "56px", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4" style={{ background: "var(--primary)", height: "calc(56px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <span className="font-bold text-[17px] text-white" style={{ letterSpacing: "-0.02em" }}>IV Hub</span>
         <div className="flex items-center gap-2.5">
           <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{session?.user?.name}</span>
