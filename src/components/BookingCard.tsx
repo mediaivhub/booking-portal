@@ -74,7 +74,7 @@ export default function BookingCard({
           </svg>
           <span>
             <strong>{booking.timeSlot || "No time"}</strong>
-            {booking.bookingDate && ` · ${new Date(booking.bookingDate).toLocaleDateString()}`}
+            {booking.bookingDate && ` · ${new Date(booking.bookingDate).toLocaleDateString("en-GB")}`}
           </span>
         </div>
 
