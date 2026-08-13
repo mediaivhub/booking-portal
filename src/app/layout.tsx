@@ -8,6 +8,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 export const metadata: Metadata = {
   title: "IV Hub · Booking Portal",
   description: "IV Wellness Lounge Clinic — Booking Assignment Portal",
+  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
