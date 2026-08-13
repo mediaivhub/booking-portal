@@ -24,8 +24,8 @@ export default function ToastContainer() {
 
   return (
     <div
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[999] px-5 py-3 rounded-xl text-sm font-semibold text-white shadow-lg animate-[slideDown_0.3s_ease]"
-      style={{ background: "var(--primary)" }}
+      className="fixed left-1/2 -translate-x-1/2 z-[999] px-5 py-3 rounded-xl text-sm font-semibold text-white shadow-lg animate-[slideUp_0.3s_ease]"
+      style={{ background: "var(--primary)", bottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}
     >
       {message}
     </div>
