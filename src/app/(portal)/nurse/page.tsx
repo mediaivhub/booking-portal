@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import BookingCard, { BookingData } from "@/components/BookingCard";
 import BookingDetail from "@/components/BookingDetail";
 import StatusDropdown from "@/components/StatusDropdown";
+import DatePicker from "@/components/DatePicker";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 
@@ -18,6 +19,8 @@ export default function NursePage() {
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [detailId, setDetailId] = useState<number | null>(null);
   const [statusTarget, setStatusTarget] = useState<BookingData | null>(null);
 
@@ -29,9 +32,11 @@ export default function NursePage() {
   const loadBookings = useCallback(async () => {
     const params: Record<string, string> = {};
     if (search) params.search = search;
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
     const data = await api.bookings.list(params);
     setBookings(data);
-  }, [search]);
+  }, [search, dateFrom, dateTo]);
 
   useEffect(() => {
     if (status === "authenticated") loadBookings();
@@ -191,6 +196,28 @@ export default function NursePage() {
                   <span className="ml-1 opacity-70">{filterCounts[f] ?? 0}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Date Range */}
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 flex items-center gap-1.5">
+                <label className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>From</label>
+                <DatePicker
+                  value={dateFrom}
+                  onChange={setDateFrom}
+                  className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
+                  style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
+                />
+              </div>
+              <div className="flex-1 flex items-center gap-1.5">
+                <label className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>To</label>
+                <DatePicker
+                  value={dateTo}
+                  onChange={setDateTo}
+                  className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
+                  style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
+                />
+              </div>
             </div>
 
             {/* Cards */}
