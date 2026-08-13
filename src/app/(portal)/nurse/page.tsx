@@ -66,19 +66,17 @@ export default function NursePage() {
     );
   }
 
-  const assigned = bookings.filter((b) => b.status === "assigned").length;
-  const ontheway = bookings.filter((b) => b.status === "ontheway").length;
-  const progress = bookings.filter((b) => b.status === "progress").length;
-  const completed = bookings.filter((b) => b.status === "completed").length;
   const displayedBookings = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
+  const completed = bookings.filter((b) => b.status === "completed").length;
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
+  const isCurrentOrUpcoming = (b: BookingData) => !b.bookingDate || new Date(b.bookingDate) >= startOfToday;
+  const assigned = bookings.filter((b) => b.status === "assigned" && isCurrentOrUpcoming(b)).length;
+  const ontheway = bookings.filter((b) => b.status === "ontheway" && isCurrentOrUpcoming(b)).length;
+  const progress = bookings.filter((b) => b.status === "progress" && isCurrentOrUpcoming(b)).length;
   const upcomingBookings = bookings.filter(
-    (b) =>
-      b.status !== "completed" &&
-      b.status !== "cancelled" &&
-      (!b.bookingDate || new Date(b.bookingDate) >= startOfToday)
+    (b) => b.status !== "completed" && b.status !== "cancelled" && isCurrentOrUpcoming(b)
   );
 
   return (
