@@ -18,6 +18,7 @@ export default function NursePage() {
   const [page, setPage] = useState<Page>("home");
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [filter, setFilter] = useState("all");
+  const [homeFilter, setHomeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -83,9 +84,13 @@ export default function NursePage() {
   const upcomingBookings = bookings.filter(
     (b) => b.status !== "completed" && b.status !== "cancelled" && isCurrentOrUpcoming(b)
   );
+  const displayedUpcoming = homeFilter === "all" ? upcomingBookings : upcomingBookings.filter((b) => b.status === homeFilter);
 
   const filterCounts: Record<string, number> = { all: bookings.length };
   for (const b of bookings) filterCounts[b.status] = (filterCounts[b.status] ?? 0) + 1;
+
+  const homeCounts: Record<string, number> = { all: upcomingBookings.length };
+  for (const b of upcomingBookings) homeCounts[b.status] = (homeCounts[b.status] ?? 0) + 1;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
@@ -143,8 +148,28 @@ export default function NursePage() {
             {/* Current / upcoming bookings preview */}
             <div>
               <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text-2)" }}>Your Upcoming Bookings</h3>
+
+              {/* Filter pills */}
+              <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
+                {["all", "assigned", "ontheway", "progress", "completed"].map((f) => (
+                  <button
+                    key={f}
+                    className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{
+                      background: homeFilter === f ? "var(--primary)" : "var(--bg-card)",
+                      color: homeFilter === f ? "#fff" : "var(--text-2)",
+                      border: `1px solid ${homeFilter === f ? "var(--primary)" : "var(--border)"}`,
+                    }}
+                    onClick={() => setHomeFilter(f)}
+                  >
+                    {f === "all" ? "All" : f === "ontheway" ? "On Way" : f === "progress" ? "Active" : f.charAt(0).toUpperCase() + f.slice(1)}
+                    <span className="ml-1 opacity-70">{homeCounts[f] ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-3">
-                {upcomingBookings.slice(0, 5).map((b) => (
+                {displayedUpcoming.slice(0, 5).map((b) => (
                   <BookingCard
                     key={b.id}
                     booking={b}
@@ -153,7 +178,7 @@ export default function NursePage() {
                     onStatus={(bk) => setStatusTarget(bk)}
                   />
                 ))}
-                {upcomingBookings.length === 0 && (
+                {displayedUpcoming.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-sm" style={{ color: "var(--text-3)" }}>No upcoming bookings</p>
                   </div>
