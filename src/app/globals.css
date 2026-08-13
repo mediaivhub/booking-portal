@@ -102,6 +102,15 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
+@keyframes slideDownOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
 @keyframes slideDown {
   from {
     transform: translateY(-20px);

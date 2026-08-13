@@ -50,6 +50,12 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     paymentMethod: PAYMENT_METHODS[0],
   });
   const [loading, setLoading] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  function requestClose() {
+    setClosing(true);
+    setTimeout(onClose, 250);
+  }
 
   function update(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -77,16 +83,25 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
   }
 
   return (
-    <div className="fixed inset-0 z-[100]" onClick={onClose}>
+    <div className="fixed inset-0 z-[100]" onClick={requestClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
-        className="absolute bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] overflow-y-auto animate-[slideUp_0.3s_ease]"
+        className={`absolute bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] overflow-y-auto ${closing ? "animate-[slideDownOut_0.25s_ease_forwards]" : "animate-[slideUp_0.3s_ease]"}`}
         style={{ background: "var(--bg-card)", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 p-4 border-b" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
           <div className="w-10 h-1 rounded-full mx-auto mb-3" style={{ background: "var(--border)" }} />
-          <h3 className="text-lg font-bold" style={{ color: "var(--text-1)" }}>New Booking</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold" style={{ color: "var(--text-1)" }}>New Booking</h3>
+            <button
+              onClick={requestClose}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:brightness-90"
+              style={{ background: "var(--bg)", color: "var(--text-3)" }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" /></svg>
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-3">
