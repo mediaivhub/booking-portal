@@ -35,4 +35,9 @@ const optional = ["VAPID_PRIVATE_KEY", "NEXT_PUBLIC_VAPID_PUBLIC_KEY", "VAPID_SU
 for (const name of optional) {
   console.log(`${name}:`, has(name) ? "set" : "not set (push notifications disabled)");
 }
+
+const optionalEmail = ["SENDGRID_API_KEY", "SENDGRID_FROM_EMAIL"];
+for (const name of optionalEmail) {
+  console.log(`${name}:`, has(name) ? "set" : "not set (booking-assignment emails disabled)");
+}
 console.log("────────────────────────────\n");

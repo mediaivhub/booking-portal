@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendPushToAdmins, sendPushToUsers } from "@/lib/push";
+import { sendBookingAssignedEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -186,7 +187,7 @@ export async function POST(req: NextRequest) {
     },
     include: {
       client: true,
-      nurse: { select: { id: true, name: true, initials: true } },
+      nurse: { select: { id: true, name: true, initials: true, email: true } },
     },
   });
 
@@ -198,12 +199,13 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  if (booking.nurseId) {
+  if (booking.nurseId && booking.nurse) {
     await sendPushToUsers([booking.nurseId], {
       title: "New booking assigned",
       body: `${booking.taskId} · ${booking.client.name} · ${booking.timeSlot || "No time set"}`,
       url: "/nurse",
     });
+    await sendBookingAssignedEmail(booking.nurse.email, { ...booking, nurse: booking.nurse });
   } else {
     await sendPushToAdmins(
       {
