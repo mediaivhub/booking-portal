@@ -27,6 +27,7 @@ interface Props {
   onDetail: (booking: BookingData) => void;
   onAssign?: (booking: BookingData) => void;
   onStatus?: (booking: BookingData) => void;
+  onDelete?: (booking: BookingData) => void;
   /** Read-only card for archival views (e.g. History) — no Assign/Status actions, shows service name instead. */
   readOnly?: boolean;
 }
@@ -37,6 +38,7 @@ export default function BookingCard({
   onDetail,
   onAssign,
   onStatus,
+  onDelete,
   readOnly,
 }: Props) {
   const initials = booking.nurse?.initials ||
@@ -128,16 +130,31 @@ export default function BookingCard({
             <span className="text-xs" style={{ color: "var(--text-3)" }}>{booking.service}</span>
           )
         ) : (
-          <button
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onStatus?.(booking);
-            }}
-          >
-            Status ▾
-          </button>
+          <div className="flex items-center gap-1.5">
+            {isAdmin && onDelete && (
+              <button
+                className="w-8 h-8 rounded-lg flex items-center justify-center border transition-colors hover:brightness-90"
+                style={{ borderColor: "var(--border)", color: "var(--status-cancelled)" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(booking);
+                }}
+                title="Delete booking"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" /></svg>
+              </button>
+            )}
+            <button
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatus?.(booking);
+              }}
+            >
+              Status ▾
+            </button>
+          </div>
         )}
       </div>
     </div>

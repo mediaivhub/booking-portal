@@ -12,6 +12,7 @@ import AssignDropdown from "@/components/AssignDropdown";
 import CreateBookingModal from "@/components/CreateBookingModal";
 import AddNurseModal from "@/components/AddNurseModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
+import ConfirmModal from "@/components/ConfirmModal";
 import DatePicker from "@/components/DatePicker";
 import Select from "@/components/Select";
 import NotificationBell from "@/components/NotificationBell";
@@ -48,6 +49,8 @@ export default function AdminPage() {
   const [detailId, setDetailId] = useState<number | null>(null);
   const [statusTarget, setStatusTarget] = useState<BookingData | null>(null);
   const [assignTarget, setAssignTarget] = useState<BookingData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BookingData | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddNurse, setShowAddNurse] = useState(false);
   const [resetPasswordTarget, setResetPasswordTarget] = useState<NurseInfo | null>(null);
@@ -195,6 +198,20 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.bookings.remove(deleteTarget.id);
+      toast("Booking deleted");
+      setDeleteTarget(null);
+      refreshCurrentView();
+    } catch (err) {
+      toast((err as Error).message);
+    }
+    setDeleting(false);
+  }
+
   async function toggleNurseActive(nurse: NurseInfo) {
     try {
       await api.nurses.setActive(nurse.id, !nurse.isActive);
@@ -331,6 +348,7 @@ export default function AdminPage() {
               onDetail={(bk) => setDetailId(bk.id)}
               onAssign={(bk) => setAssignTarget(bk)}
               onStatus={(bk) => setStatusTarget(bk)}
+              onDelete={(bk) => setDeleteTarget(bk)}
             />
           ))}
           {bookings.length === 0 && (
@@ -481,6 +499,7 @@ export default function AdminPage() {
                     onDetail={(bk) => setDetailId(bk.id)}
                     onAssign={(bk) => setAssignTarget(bk)}
                     onStatus={(bk) => setStatusTarget(bk)}
+                    onDelete={(bk) => setDeleteTarget(bk)}
                   />
                 ))}
                 {upcoming.length === 0 && (
@@ -743,6 +762,17 @@ export default function AdminPage() {
           nurseName={resetPasswordTarget.name}
           onSubmit={resetNursePassword}
           onClose={() => setResetPasswordTarget(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="Delete Booking"
+          message={`Are you sure you want to delete ${deleteTarget.taskId}? This cannot be undone.`}
+          confirmLabel="Delete"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteTarget(null)}
         />
       )}
     </div>

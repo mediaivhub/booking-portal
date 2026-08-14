@@ -43,6 +43,8 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
+    remove: (id: number) =>
+      request(`/bookings/${id}`, { method: "DELETE" }),
   },
 
   nurses: {

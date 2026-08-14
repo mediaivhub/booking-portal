@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import StatusBadge from "./StatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import DatePicker from "./DatePicker";
+import ConfirmModal from "./ConfirmModal";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
 import type { BookingData } from "./BookingCard";
@@ -35,6 +36,8 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [showAssign, setShowAssign] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.bookings.get(bookingId).then(setBooking);
@@ -105,6 +108,19 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await api.bookings.remove(booking!.id);
+      toast("Booking deleted");
+      onUpdate();
+      onClose();
+    } catch (err) {
+      toast((err as Error).message);
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[200] flex flex-col animate-[slideUp_0.3s_ease]" style={{ background: "var(--bg-card)" }}>
       {/* Header */}
@@ -143,14 +159,25 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: "100px", WebkitOverflowScrolling: "touch" }}>
         {tab === "details" && !editing && (
           <>
-            {canEdit && (
-              <button
-                className="w-full py-2 mb-3 rounded-xl text-xs font-semibold border"
-                style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-                onClick={startEdit}
-              >
-                Edit Booking
-              </button>
+            {isAdmin && (
+              <div className="flex gap-2 mb-3">
+                {canEdit && (
+                  <button
+                    className="flex-1 py-2 rounded-xl text-xs font-semibold border"
+                    style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+                    onClick={startEdit}
+                  >
+                    Edit Booking
+                  </button>
+                )}
+                <button
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold border"
+                  style={{ borderColor: "var(--status-cancelled)", color: "var(--status-cancelled)" }}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Booking
+                </button>
+              </div>
             )}
             <DetailRow label="Address" value={booking.address} isAddress />
             <DetailRow label="Description" value={booking.description} />
@@ -310,6 +337,17 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
           currentStatus={booking.status}
           onSelect={handleStatusChange}
           onClose={() => setShowStatus(false)}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          title="Delete Booking"
+          message={`Are you sure you want to delete ${booking.taskId}? This cannot be undone.`}
+          confirmLabel="Delete"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteConfirm(false)}
         />
       )}
     </div>
