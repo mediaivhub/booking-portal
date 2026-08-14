@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
 import DatePicker from "./DatePicker";
+import TimePicker from "./TimePicker";
 import Select from "./Select";
 
 interface Nurse {
@@ -25,53 +26,6 @@ function formatTime12(time24: string) {
   h = h % 12;
   if (h === 0) h = 12;
   return `${String(h).padStart(2, "0")}:${mStr} ${period}`;
-}
-
-const HOURS_12 = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
-const MINUTES_60 = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
-const PERIODS = ["AM", "PM"];
-
-function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [hStr, mStr] = value.split(":");
-  const h24 = parseInt(hStr, 10) || 0;
-  const period = h24 >= 12 ? "PM" : "AM";
-  let h12 = h24 % 12;
-  if (h12 === 0) h12 = 12;
-  const hourLabel = String(h12).padStart(2, "0");
-
-  function set(newHour12: string, newMinute: string, newPeriod: string) {
-    let hh = parseInt(newHour12, 10) % 12;
-    if (newPeriod === "PM") hh += 12;
-    onChange(`${String(hh).padStart(2, "0")}:${newMinute}`);
-  }
-
-  const fieldStyle = { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" };
-
-  return (
-    <div className="grid grid-cols-3 gap-1.5">
-      <Select
-        value={hourLabel}
-        onChange={(v) => set(v, mStr, period)}
-        options={HOURS_12.map((h) => ({ label: h, value: h }))}
-        className="w-full px-2 py-2.5 rounded-xl border outline-none text-sm"
-        style={fieldStyle}
-      />
-      <Select
-        value={mStr}
-        onChange={(v) => set(hourLabel, v, period)}
-        options={MINUTES_60.map((m) => ({ label: m, value: m }))}
-        className="w-full px-2 py-2.5 rounded-xl border outline-none text-sm"
-        style={fieldStyle}
-      />
-      <Select
-        value={period}
-        onChange={(v) => set(hourLabel, mStr, v)}
-        options={PERIODS.map((p) => ({ label: p, value: p }))}
-        className="w-full px-2 py-2.5 rounded-xl border outline-none text-sm"
-        style={fieldStyle}
-      />
-    </div>
-  );
 }
 
 const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
@@ -169,14 +123,24 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
             <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
               Start Time
             </label>
-            <TimeSelect value={form.startTime} onChange={(v) => update("startTime", v)} />
+            <TimePicker
+              value={form.startTime}
+              onChange={(v) => update("startTime", v)}
+              className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+              style={{ background: "var(--bg)", borderColor: "var(--border)" }}
+            />
           </div>
 
           <div>
             <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
               End Time
             </label>
-            <TimeSelect value={form.endTime} onChange={(v) => update("endTime", v)} />
+            <TimePicker
+              value={form.endTime}
+              onChange={(v) => update("endTime", v)}
+              className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+              style={{ background: "var(--bg)", borderColor: "var(--border)" }}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
