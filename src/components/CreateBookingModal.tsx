@@ -159,7 +159,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
             />
           </div>
 
-          <FormField label="Notes" value={form.description} onChange={(v) => update("description", v)} multiline placeholder="Special instructions..." />
+          <FormField label="Description" value={form.description} onChange={(v) => update("description", v)} multiline placeholder="Special instructions..." />
 
           <FormField label="Payment" value={form.paymentMethod} onChange={(v) => update("paymentMethod", v)} options={PAYMENT_METHODS} />
 

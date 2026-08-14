@@ -44,7 +44,7 @@ function buildBookingTable(booking: BookingEmailData) {
       ${row("Time Slot", booking.timeSlot)}
       ${row("Address", booking.address)}
       ${row("Payment Method", booking.paymentMethod)}
-      ${row("Notes", booking.description)}
+      ${row("Description", booking.description)}
       ${row("Assigned Nurse", booking.nurse.name)}
       ${row("Created By", booking.createdBy)}
     </table>`;
