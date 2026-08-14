@@ -39,8 +39,6 @@ function buildBookingTable(booking: BookingEmailData) {
       ${row("Task ID", booking.taskId)}
       ${row("Order ID", booking.orderId)}
       ${row("Client Name", booking.client.name)}
-      ${row("Client Phone", booking.client.phone)}
-      ${row("Client Email", booking.client.email)}
       ${row("Service", booking.service)}
       ${row("Date", dateStr)}
       ${row("Time Slot", booking.timeSlot)}
