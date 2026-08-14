@@ -67,10 +67,13 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     }
     setLoading(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { startTime, endTime, ...rest } = form;
       await api.bookings.create({
         ...rest,
-        timeSlot: `${formatTime12(startTime)} - ${formatTime12(endTime)}`,
+        timeSlot: formatTime12(startTime),
+        // End Time is commented out for now (see JSX below) — using start time only.
+        // timeSlot: `${formatTime12(startTime)} - ${formatTime12(endTime)}`,
         nurseId: form.nurseId ? parseInt(form.nurseId) : null,
       });
       toast("Booking created");
@@ -131,6 +134,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
             />
           </div>
 
+          {/* End Time commented out for now — using start time only.
           <div>
             <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
               End Time
@@ -142,6 +146,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
               style={{ background: "var(--bg)", borderColor: "var(--border)" }}
             />
           </div>
+          */}
 
           <div className="grid grid-cols-2 gap-2">
             <FormField label="Service" value={form.service} onChange={(v) => update("service", v)} options={SERVICES} />
