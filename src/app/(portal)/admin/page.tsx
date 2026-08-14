@@ -68,6 +68,7 @@ export default function AdminPage() {
   const [bookingsServices, setBookingsServices] = useState<string[]>([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [homeFilter, setHomeFilter] = useState("all");
+  const [homeDate, setHomeDate] = useState("");
   const [homeCounts, setHomeCounts] = useState<Record<string, number>>({
     all: 0, unassigned: 0, assigned: 0, ontheway: 0, progress: 0, completed: 0, cancelled: 0,
   });
@@ -85,13 +86,15 @@ export default function AdminPage() {
 
   const loadUpcoming = useCallback(async () => {
     const params: Record<string, string> = {
-      dateFrom: todayISO,
+      // A specific date filters to just that day; otherwise "today onward".
+      dateFrom: homeDate || todayISO,
       // Home only shows active work — completed and cancelled bookings
       // belong in History — so "all" here excludes both of those.
       status: homeFilter === "all" ? "unassigned,assigned,ontheway,progress" : homeFilter,
       page: String(upcomingPage),
       limit: String(PAGE_SIZE),
     };
+    if (homeDate) params.dateTo = homeDate;
     const res = await api.bookings.list(params);
     setUpcoming(res.data);
     setUpcomingTotal(res.total);
@@ -100,11 +103,11 @@ export default function AdminPage() {
       all: (res.counts.unassigned || 0) + (res.counts.assigned || 0) + (res.counts.ontheway || 0) + (res.counts.progress || 0),
     });
     setUpcomingLoaded(true);
-  }, [upcomingPage, homeFilter, todayISO]);
+  }, [upcomingPage, homeFilter, homeDate, todayISO]);
 
   useEffect(() => {
     setUpcomingPage(1);
-  }, [homeFilter]);
+  }, [homeFilter, homeDate]);
 
   const loadBookings = useCallback(async () => {
     const params: Record<string, string> = {
@@ -466,6 +469,26 @@ export default function AdminPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold" style={{ color: "var(--text-2)" }}>Upcoming Bookings</h3>
               <span className="text-xs" style={{ color: "var(--text-3)" }}>{upcomingTotal} total</span>
+            </div>
+
+            {/* Date filter — restricted to today onward, matching Home's scope */}
+            <div className="flex items-center gap-2">
+              <DatePicker
+                value={homeDate}
+                onChange={setHomeDate}
+                minDate={todayISO}
+                className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
+              />
+              {homeDate && (
+                <button
+                  onClick={() => setHomeDate("")}
+                  className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0"
+                  style={{ borderColor: "var(--border)", color: "var(--status-cancelled)" }}
+                >
+                  Clear
+                </button>
+              )}
             </div>
 
             {/* Filter pills */}

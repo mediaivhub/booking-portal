@@ -8,6 +8,8 @@ interface Props {
   onChange: (value: string) => void;
   className?: string;
   style?: React.CSSProperties;
+  /** ISO date string (YYYY-MM-DD) — days before this are shown disabled and can't be selected. */
+  minDate?: string;
 }
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -48,8 +50,9 @@ function buildCells(viewDate: Date) {
   return cells;
 }
 
-export default function DatePicker({ value, onChange, className, style }: Props) {
+export default function DatePicker({ value, onChange, className, style, minDate }: Props) {
   const selectedDate = value ? new Date(value + "T00:00:00") : null;
+  const minDateObj = minDate ? new Date(minDate + "T00:00:00") : null;
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"days" | "months" | "years">("days");
   const [viewDate, setViewDate] = useState(selectedDate || new Date());
@@ -242,20 +245,22 @@ export default function DatePicker({ value, onChange, className, style }: Props)
                   {buildCells(viewDate).map((c, i) => {
                     const isSelected = isSameDay(c.date, selectedDate);
                     const isToday = isSameDay(c.date, today);
+                    const isDisabled = !!minDateObj && c.date < minDateObj;
                     return (
                       <button
                         key={i}
                         type="button"
+                        disabled={isDisabled}
                         onClick={() => {
                           onChange(toISO(c.date));
                           setOpen(false);
                         }}
-                        className="aspect-square rounded-lg text-xs font-medium flex items-center justify-center transition-colors hover:bg-[var(--bg)]"
+                        className="aspect-square rounded-lg text-xs font-medium flex items-center justify-center transition-colors hover:bg-[var(--bg)] disabled:hover:bg-transparent disabled:cursor-not-allowed"
                         style={{
-                          color: !c.current ? "var(--text-3)" : isSelected ? "#fff" : "var(--text-1)",
+                          color: isDisabled ? "var(--text-3)" : !c.current ? "var(--text-3)" : isSelected ? "#fff" : "var(--text-1)",
                           background: isSelected ? "var(--primary)" : "transparent",
                           border: isToday && !isSelected ? "1px solid var(--primary)" : "1px solid transparent",
-                          opacity: !c.current ? 0.4 : 1,
+                          opacity: isDisabled ? 0.25 : !c.current ? 0.4 : 1,
                         }}
                       >
                         {c.day}
