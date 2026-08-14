@@ -140,7 +140,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: "100px" }}>
+      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: "100px", WebkitOverflowScrolling: "touch" }}>
         {tab === "details" && !editing && (
           <>
             {canEdit && (

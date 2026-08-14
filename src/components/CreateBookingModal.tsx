@@ -90,7 +90,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
       <div className="absolute inset-0 bg-black/40" />
       <div
         className={`absolute bottom-0 left-0 right-0 rounded-t-2xl max-h-[85vh] overflow-y-auto ${closing ? "animate-[slideDownOut_0.25s_ease_forwards]" : "animate-[slideUp_0.3s_ease]"}`}
-        style={{ background: "var(--bg-card)", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)" }}
+        style={{ background: "var(--bg-card)", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)", WebkitOverflowScrolling: "touch" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 p-4 border-b" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>

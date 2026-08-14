@@ -418,7 +418,7 @@ export default function AdminPage() {
       </header>
 
       {/* Page Content */}
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: "80px" }}>
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: "80px", WebkitOverflowScrolling: "touch" }}>
         {page === "home" && (
           <div className="p-4 space-y-3">
             {/* Stat Cards */}

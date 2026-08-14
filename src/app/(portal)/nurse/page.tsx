@@ -120,7 +120,7 @@ export default function NursePage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: "80px" }}>
+      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: "80px", WebkitOverflowScrolling: "touch" }}>
         {page === "home" && (
           <div className="p-4 space-y-4">
             <div>
