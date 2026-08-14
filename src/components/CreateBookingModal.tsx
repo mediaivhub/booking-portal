@@ -54,7 +54,7 @@ const TIME_SLOTS = [
 
 const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
 
-const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Insurance", "Bank Transfer"];
+const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Online", "Bank Transfer"];
 
 export default function CreateBookingModal({ nurses, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
