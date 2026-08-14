@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export interface SelectOption {
   label: string;
@@ -20,9 +21,7 @@ const MAX_HEIGHT = 280;
 
 export default function Select({ value, onChange, options, className, style }: Props) {
   const [open, setOpen] = useState(false);
-  const [alignRight, setAlignRight] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
-  const [popupMaxHeight, setPopupMaxHeight] = useState(MAX_HEIGHT);
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selected = options.find((o) => o.value === value);
@@ -30,13 +29,18 @@ export default function Select({ value, onChange, options, className, style }: P
   function openPicker() {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setAlignRight(rect.left + POPUP_WIDTH > window.innerWidth - 16);
-
+      const alignRight = rect.left + POPUP_WIDTH > window.innerWidth - 16;
       const spaceBelow = window.innerHeight - rect.bottom - 16;
       const spaceAbove = rect.top - 16;
       const upward = spaceBelow < MAX_HEIGHT && spaceAbove > spaceBelow;
-      setOpenUpward(upward);
-      setPopupMaxHeight(Math.max(120, Math.min(MAX_HEIGHT, upward ? spaceAbove : spaceBelow)));
+      const maxHeight = Math.max(120, Math.min(MAX_HEIGHT, upward ? spaceAbove : spaceBelow));
+
+      setPopupStyle({
+        position: "fixed",
+        ...(alignRight ? { right: window.innerWidth - rect.right } : { left: rect.left }),
+        ...(upward ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
+        maxHeight,
+      });
     }
     setOpen(true);
   }
@@ -58,16 +62,15 @@ export default function Select({ value, onChange, options, className, style }: P
         </svg>
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
           <div className="fixed inset-0 z-[149]" onClick={() => setOpen(false)} />
           <div
-            className={`absolute z-[150] rounded-2xl p-1.5 overflow-y-auto ${alignRight ? "right-0" : "left-0"}`}
+            className="fixed z-[150] rounded-2xl p-1.5 overflow-y-auto"
             style={{
-              ...(openUpward ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }),
+              ...popupStyle,
               width: `${POPUP_WIDTH}px`,
               maxWidth: "calc(100vw - 32px)",
-              maxHeight: `${popupMaxHeight}px`,
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
               boxShadow: "var(--shadow-lg, var(--shadow-md))",
@@ -98,7 +101,8 @@ export default function Select({ value, onChange, options, className, style }: P
               );
             })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
