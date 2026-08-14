@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "IV Hub",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
   },
 };
 
