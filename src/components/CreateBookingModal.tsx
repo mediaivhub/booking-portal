@@ -30,7 +30,7 @@ function formatTime12(time24: string) {
 
 const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
 
-const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Online", "Bank Transfer"];
+const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Online", "Bank Transfer", "Prepaid"];
 
 export default function CreateBookingModal({ nurses, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
