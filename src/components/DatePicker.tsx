@@ -54,9 +54,12 @@ export default function DatePicker({ value, onChange, className, style }: Props)
   const [viewDate, setViewDate] = useState(selectedDate || new Date());
   const [yearRangeStart, setYearRangeStart] = useState(() => (selectedDate || new Date()).getFullYear() - 6);
   const [alignRight, setAlignRight] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const [popupMaxHeight, setPopupMaxHeight] = useState<number | undefined>(undefined);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const today = new Date();
   const POPUP_WIDTH = 300;
+  const POPUP_HEIGHT = 420;
 
   function displayLabel() {
     if (!selectedDate) return null;
@@ -69,6 +72,12 @@ export default function DatePicker({ value, onChange, className, style }: Props)
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setAlignRight(rect.left + POPUP_WIDTH > window.innerWidth - 16);
+
+      const spaceBelow = window.innerHeight - rect.bottom - 16;
+      const spaceAbove = rect.top - 16;
+      const upward = spaceBelow < POPUP_HEIGHT && spaceAbove > spaceBelow;
+      setOpenUpward(upward);
+      setPopupMaxHeight(Math.max(200, Math.min(POPUP_HEIGHT, upward ? spaceAbove : spaceBelow)));
     }
     setOpen(true);
   }
@@ -103,11 +112,12 @@ export default function DatePicker({ value, onChange, className, style }: Props)
         <>
           <div className="fixed inset-0 z-[149]" onClick={() => setOpen(false)} />
           <div
-            className={`absolute z-[150] rounded-2xl p-4 ${alignRight ? "right-0" : "left-0"}`}
+            className={`absolute z-[150] rounded-2xl p-4 overflow-y-auto ${alignRight ? "right-0" : "left-0"}`}
             style={{
-              top: "calc(100% + 6px)",
+              ...(openUpward ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }),
               width: "300px",
               maxWidth: "calc(100vw - 32px)",
+              maxHeight: popupMaxHeight ? `${popupMaxHeight}px` : undefined,
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
               boxShadow: "var(--shadow-lg, var(--shadow-md))",

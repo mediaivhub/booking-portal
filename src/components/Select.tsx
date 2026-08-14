@@ -21,6 +21,8 @@ const MAX_HEIGHT = 280;
 export default function Select({ value, onChange, options, className, style }: Props) {
   const [open, setOpen] = useState(false);
   const [alignRight, setAlignRight] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const [popupMaxHeight, setPopupMaxHeight] = useState(MAX_HEIGHT);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selected = options.find((o) => o.value === value);
@@ -29,6 +31,12 @@ export default function Select({ value, onChange, options, className, style }: P
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setAlignRight(rect.left + POPUP_WIDTH > window.innerWidth - 16);
+
+      const spaceBelow = window.innerHeight - rect.bottom - 16;
+      const spaceAbove = rect.top - 16;
+      const upward = spaceBelow < MAX_HEIGHT && spaceAbove > spaceBelow;
+      setOpenUpward(upward);
+      setPopupMaxHeight(Math.max(120, Math.min(MAX_HEIGHT, upward ? spaceAbove : spaceBelow)));
     }
     setOpen(true);
   }
@@ -56,10 +64,10 @@ export default function Select({ value, onChange, options, className, style }: P
           <div
             className={`absolute z-[150] rounded-2xl p-1.5 overflow-y-auto ${alignRight ? "right-0" : "left-0"}`}
             style={{
-              top: "calc(100% + 6px)",
+              ...(openUpward ? { bottom: "calc(100% + 6px)" } : { top: "calc(100% + 6px)" }),
               width: `${POPUP_WIDTH}px`,
               maxWidth: "calc(100vw - 32px)",
-              maxHeight: `${MAX_HEIGHT}px`,
+              maxHeight: `${popupMaxHeight}px`,
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
               boxShadow: "var(--shadow-lg, var(--shadow-md))",
