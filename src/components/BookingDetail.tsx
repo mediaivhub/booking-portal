@@ -107,11 +107,8 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col animate-[slideUp_0.3s_ease]" style={{ background: "var(--bg-card)" }}>
-      {/* Notch/Dynamic Island spacer — kept plain (not the header's green) so
-          nothing bright sits directly behind the island itself */}
-      <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0px)", background: "var(--bg-card)" }} />
       {/* Header */}
-      <div className="flex items-center justify-between px-4" style={{ background: "var(--primary)", padding: "16px" }}>
+      <div className="flex items-center justify-between px-4" style={{ background: "var(--primary)", padding: "16px", paddingTop: "calc(16px + env(safe-area-inset-top, 0px))" }}>
         <div className="flex items-center gap-3">
           <span className="font-bold text-[17px] text-white tabular-nums">{booking.jobId || booking.taskId}</span>
           <StatusBadge status={booking.status} />
