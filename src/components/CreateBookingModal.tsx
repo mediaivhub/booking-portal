@@ -17,40 +17,15 @@ interface Props {
   onCreated: () => void;
 }
 
-const TIME_SLOTS = [
-  "08:00 AM - 08:30 AM",
-  "08:30 AM - 09:00 AM",
-  "09:00 AM - 09:30 AM",
-  "09:30 AM - 10:00 AM",
-  "10:00 AM - 10:30 AM",
-  "10:30 AM - 11:00 AM",
-  "11:00 AM - 11:30 AM",
-  "11:30 AM - 12:00 PM",
-  "12:00 PM - 12:30 PM",
-  "12:30 PM - 01:00 PM",
-  "01:00 PM - 01:30 PM",
-  "01:30 PM - 02:00 PM",
-  "02:00 PM - 02:30 PM",
-  "02:30 PM - 03:00 PM",
-  "03:00 PM - 03:30 PM",
-  "03:30 PM - 04:00 PM",
-  "04:00 PM - 04:30 PM",
-  "04:30 PM - 05:00 PM",
-  "05:00 PM - 05:30 PM",
-  "05:30 PM - 06:00 PM",
-  "06:00 PM - 06:30 PM",
-  "06:30 PM - 07:00 PM",
-  "07:00 PM - 07:30 PM",
-  "07:30 PM - 08:00 PM",
-  "08:00 PM - 08:30 PM",
-  "08:30 PM - 09:00 PM",
-  "09:00 PM - 09:30 PM",
-  "09:30 PM - 10:00 PM",
-  "10:00 PM - 10:30 PM",
-  "10:30 PM - 11:00 PM",
-  "11:00 PM - 11:30 PM",
-  "11:30 PM - 12:00 AM",
-];
+function formatTime12(time24: string) {
+  if (!time24) return "";
+  const [hStr, mStr] = time24.split(":");
+  let h = parseInt(hStr, 10);
+  const period = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${String(h).padStart(2, "0")}:${mStr} ${period}`;
+}
 
 const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
 
@@ -64,7 +39,8 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     orderId: "",
     address: "",
     bookingDate: "",
-    timeSlot: TIME_SLOTS[0],
+    startTime: "09:00",
+    endTime: "09:30",
     service: SERVICES[0],
     nurseId: "",
     description: "",
@@ -90,8 +66,10 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     }
     setLoading(true);
     try {
+      const { startTime, endTime, ...rest } = form;
       await api.bookings.create({
-        ...form,
+        ...rest,
+        timeSlot: `${formatTime12(startTime)} - ${formatTime12(endTime)}`,
         nurseId: form.nurseId ? parseInt(form.nurseId) : null,
       });
       toast("Booking created");
@@ -138,9 +116,11 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
 
           <FormField label="Address" value={form.address} onChange={(v) => update("address", v)} placeholder="Full address in Dubai" />
 
+          <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
+
           <div className="grid grid-cols-2 gap-2">
-            <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
-            <FormField label="Time Slot" value={form.timeSlot} onChange={(v) => update("timeSlot", v)} options={TIME_SLOTS} />
+            <FormField label="Start Time" value={form.startTime} onChange={(v) => update("startTime", v)} type="time" />
+            <FormField label="End Time" value={form.endTime} onChange={(v) => update("endTime", v)} type="time" />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
