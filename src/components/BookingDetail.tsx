@@ -339,7 +339,7 @@ function DetailRow({ label, value, isAddress, isPhone }: { label: string; value?
           {value}
         </a>
       ) : (
-        <p className="text-sm font-medium" style={{ color: "var(--text-1)" }}>{value}</p>
+        <p className="text-sm font-medium" style={{ color: "var(--text-1)", whiteSpace: "pre-wrap" }}>{value}</p>
       )}
     </div>
   );

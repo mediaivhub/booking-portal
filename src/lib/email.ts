@@ -20,12 +20,22 @@ interface BookingEmailData {
   nurse: { name: string };
 }
 
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function row(label: string, value?: string | null) {
   if (!value) return "";
+  const safeValue = escapeHtml(value).replace(/\n/g, "<br>");
   return `
     <tr>
       <td style="padding:8px 12px;border:1px solid #e5e5e5;background:#f7f7f7;font-weight:600;color:#333;width:160px;">${label}</td>
-      <td style="padding:8px 12px;border:1px solid #e5e5e5;color:#111;">${value}</td>
+      <td style="padding:8px 12px;border:1px solid #e5e5e5;color:#111;">${safeValue}</td>
     </tr>`;
 }
 
