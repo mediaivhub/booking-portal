@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import StatusBadge from "./StatusBadge";
 import StatusDropdown from "./StatusDropdown";
+import AssignDropdown from "./AssignDropdown";
 import DatePicker from "./DatePicker";
 import ConfirmModal from "./ConfirmModal";
 import { api } from "@/lib/api";
@@ -97,9 +98,10 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
 
   async function handleAssign(nurseId: number) {
     setShowAssign(false);
+    const wasAssigned = !!booking!.nurse;
     try {
       await api.bookings.assign(booking!.id, nurseId);
-      toast("Nurse assigned");
+      toast(wasAssigned ? "Nurse reassigned" : "Nurse assigned");
       const updated = await api.bookings.get(bookingId);
       setBooking(updated);
       onUpdate();
@@ -273,15 +275,20 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       {/* Footer */}
       {booking.nurse ? (
         <div className="flex items-center gap-2.5 px-4 flex-wrap" style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", background: "var(--bg-card)" }}>
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <button
+            type="button"
+            disabled={!isAdmin}
+            className="flex items-center gap-2.5 flex-1 min-w-0 text-left disabled:cursor-default"
+            onClick={() => setShowAssign(true)}
+          >
             <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: "var(--primary)" }}>
               {booking.nurse.initials || booking.nurse.name.split(" ").map((w) => w[0]).join("")}
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-sm truncate">{booking.nurse.name}</p>
-              <p className="text-xs" style={{ color: "var(--text-3)" }}>Team: Nurses</p>
+              <p className="text-xs" style={{ color: "var(--text-3)" }}>{isAdmin ? "Tap to reassign" : "Team: Nurses"}</p>
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-2 relative">
             <button
               className="px-3 py-2 rounded-xl text-xs font-semibold text-white"
@@ -304,32 +311,24 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
         </div>
       ) : (
         isAdmin && (
-          <div className="relative" style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", background: "var(--bg-card)" }}>
+          <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", background: "var(--bg-card)" }}>
             <button
               className="w-full py-3 rounded-xl text-sm font-semibold"
               style={{ background: "var(--accent)", color: "var(--primary)" }}
-              onClick={() => setShowAssign((v) => !v)}
+              onClick={() => setShowAssign(true)}
             >
               Assign Nurse
             </button>
-            {showAssign && (
-              <div className="absolute bottom-16 left-4 right-4 rounded-xl border shadow-lg p-1.5 max-h-56 overflow-y-auto z-10" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
-                {nurses.map((n) => (
-                  <button
-                    key={n.id}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left"
-                    onClick={() => handleAssign(n.id)}
-                  >
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: "var(--primary)" }}>
-                      {n.initials || n.name.split(" ").map((w) => w[0]).join("")}
-                    </div>
-                    <span className="text-sm">{n.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )
+      )}
+
+      {showAssign && (
+        <AssignDropdown
+          nurses={nurses}
+          onSelect={handleAssign}
+          onClose={() => setShowAssign(false)}
+        />
       )}
 
       {showStatus && (
