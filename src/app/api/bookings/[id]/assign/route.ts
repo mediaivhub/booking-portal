@@ -63,7 +63,7 @@ export async function PATCH(
       title: nurseId ? "Booking reassigned" : "Booking unassigned",
       body: nurseId
         ? `${updated.taskId} has been reassigned to ${nurse?.name ?? "another nurse"}`
-        : `${updated.taskId} has been unassigned from you`,
+        : `${updated.taskId} has been Removed from you`,
       url: "/nurse",
     });
   }
