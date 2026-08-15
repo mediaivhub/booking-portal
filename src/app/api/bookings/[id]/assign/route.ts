@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendPushToUsers } from "@/lib/push";
+import { sendBookingAssignedEmail } from "@/lib/email";
 import { NextRequest } from "next/server";
 
 export async function PATCH(
@@ -42,7 +43,7 @@ export async function PATCH(
     },
     include: {
       client: true,
-      nurse: { select: { id: true, name: true, initials: true } },
+      nurse: { select: { id: true, name: true, initials: true, email: true } },
     },
   });
 
@@ -56,11 +57,20 @@ export async function PATCH(
     },
   });
 
-  if (nurseId) {
+  if (nurseId && updated.nurse) {
     await sendPushToUsers([nurseId], {
       title: "New booking assigned",
       body: `${updated.taskId} · ${updated.client.name} · ${updated.timeSlot || "No time set"}`,
       url: "/nurse",
+    });
+    const createdEntry = await prisma.bookingHistory.findFirst({
+      where: { bookingId: updated.id, action: "Booking created" },
+      select: { performedBy: true },
+    });
+    await sendBookingAssignedEmail(updated.nurse.email, {
+      ...updated,
+      nurse: updated.nurse,
+      createdBy: createdEntry?.performedBy ?? session.user.name,
     });
   }
 
