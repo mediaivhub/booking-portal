@@ -7,6 +7,7 @@ import BookingCard, { BookingData } from "@/components/BookingCard";
 import BookingDetail from "@/components/BookingDetail";
 import StatusDropdown from "@/components/StatusDropdown";
 import DatePicker from "@/components/DatePicker";
+import DateRangePicker from "@/components/DateRangePicker";
 import NotificationBell from "@/components/NotificationBell";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
@@ -261,24 +262,13 @@ export default function NursePage() {
 
             {/* Date Range */}
             <div className="flex gap-2 items-center">
-              <div className="flex-1 flex items-center gap-1.5">
-                <label className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>From</label>
-                <DatePicker
-                  value={dateFrom}
-                  onChange={setDateFrom}
-                  className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
-                  style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
-                />
-              </div>
-              <div className="flex-1 flex items-center gap-1.5">
-                <label className="text-[11px] shrink-0" style={{ color: "var(--text-3)" }}>To</label>
-                <DatePicker
-                  value={dateTo}
-                  onChange={setDateTo}
-                  className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
-                  style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
-                />
-              </div>
+              <DateRangePicker
+                from={dateFrom}
+                to={dateTo}
+                onChange={(f, t) => { setDateFrom(f); setDateTo(t); }}
+                className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
+                style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
+              />
             </div>
 
             {/* Cards */}
