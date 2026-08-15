@@ -57,6 +57,17 @@ export async function PATCH(
     },
   });
 
+  // Previously assigned nurse is being replaced or removed — let them know.
+  if (existing.nurseId && existing.nurseId !== (nurseId || null)) {
+    await sendPushToUsers([existing.nurseId], {
+      title: nurseId ? "Booking reassigned" : "Booking unassigned",
+      body: nurseId
+        ? `${updated.taskId} has been reassigned to ${nurse?.name ?? "another nurse"}`
+        : `${updated.taskId} has been unassigned from you`,
+      url: "/nurse",
+    });
+  }
+
   if (nurseId && updated.nurse) {
     await sendPushToUsers([nurseId], {
       title: "New booking assigned",
