@@ -20,6 +20,7 @@ export default function NursePage() {
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [filter, setFilter] = useState("all");
   const [homeFilter, setHomeFilter] = useState("all");
+  const [homeDate, setHomeDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -76,14 +77,17 @@ export default function NursePage() {
   const displayedBookings = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
   const completed = bookings.filter((b) => b.status === "completed").length;
 
+  const todayISO = new Date().toISOString().slice(0, 10);
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const isCurrentOrUpcoming = (b: BookingData) => !b.bookingDate || new Date(b.bookingDate) >= startOfToday;
+  // A specific date filters to just that day; "All Upcoming" (homeDate cleared) shows today onward.
+  const matchesHomeDate = (b: BookingData) => (homeDate ? b.bookingDate?.slice(0, 10) === homeDate : isCurrentOrUpcoming(b));
   const assigned = bookings.filter((b) => b.status === "assigned" && isCurrentOrUpcoming(b)).length;
   const ontheway = bookings.filter((b) => b.status === "ontheway" && isCurrentOrUpcoming(b)).length;
   const progress = bookings.filter((b) => b.status === "progress" && isCurrentOrUpcoming(b)).length;
   const upcomingBookings = bookings.filter(
-    (b) => b.status !== "completed" && b.status !== "cancelled" && isCurrentOrUpcoming(b)
+    (b) => b.status !== "completed" && b.status !== "cancelled" && matchesHomeDate(b)
   );
   const displayedUpcoming = homeFilter === "all" ? upcomingBookings : upcomingBookings.filter((b) => b.status === homeFilter);
 
@@ -151,9 +155,40 @@ export default function NursePage() {
             <div>
               <h3 className="text-sm font-bold mb-2" style={{ color: "var(--text-2)" }}>Your Upcoming Bookings</h3>
 
+              {/* Date filter — restricted to today onward */}
+              <div className="flex items-center gap-2 mb-2">
+                <DatePicker
+                  value={homeDate}
+                  onChange={setHomeDate}
+                  minDate={todayISO}
+                  className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
+                  style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
+                />
+                {homeDate && (
+                  <button
+                    onClick={() => setHomeDate("")}
+                    className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0"
+                    style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+                  >
+                    All Upcoming
+                  </button>
+                )}
+              </div>
+
               {/* Filter pills */}
               <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
-                {["all", "ontheway"].map((f) => (
+                <button
+                  className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
+                  style={{
+                    background: homeDate === todayISO ? "var(--primary)" : "var(--bg-card)",
+                    color: homeDate === todayISO ? "#fff" : "var(--text-2)",
+                    border: `1px solid ${homeDate === todayISO ? "var(--primary)" : "var(--border)"}`,
+                  }}
+                  onClick={() => setHomeDate(todayISO)}
+                >
+                  Today
+                </button>
+                {["ontheway", "all"].map((f) => (
                   <button
                     key={f}
                     className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"

@@ -68,7 +68,7 @@ export default function AdminPage() {
   const [bookingsServices, setBookingsServices] = useState<string[]>([]);
   const [bookingsLoaded, setBookingsLoaded] = useState(false);
   const [homeFilter, setHomeFilter] = useState("all");
-  const [homeDate, setHomeDate] = useState("");
+  const [homeDate, setHomeDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [homeCounts, setHomeCounts] = useState<Record<string, number>>({
     all: 0, unassigned: 0, assigned: 0, ontheway: 0, progress: 0, completed: 0, cancelled: 0,
   });
@@ -484,16 +484,27 @@ export default function AdminPage() {
                 <button
                   onClick={() => setHomeDate("")}
                   className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0"
-                  style={{ borderColor: "var(--border)", color: "var(--status-cancelled)" }}
+                  style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
                 >
-                  Clear
+                  All Upcoming
                 </button>
               )}
             </div>
 
             {/* Filter pills */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {["all", "unassigned", "assigned", "ontheway"].map((f) => (
+              <button
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                style={{
+                  background: homeDate === todayISO ? "var(--primary)" : "var(--bg-card)",
+                  color: homeDate === todayISO ? "#fff" : "var(--text-2)",
+                  border: `1px solid ${homeDate === todayISO ? "var(--primary)" : "var(--border)"}`,
+                }}
+                onClick={() => setHomeDate(todayISO)}
+              >
+                Today
+              </button>
+              {["unassigned", "assigned", "ontheway", "all"].map((f) => (
                 <button
                   key={f}
                   className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
