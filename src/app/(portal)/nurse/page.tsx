@@ -164,15 +164,17 @@ export default function NursePage() {
                   className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
                   style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
                 />
-                {homeDate && (
-                  <button
-                    onClick={() => setHomeDate("")}
-                    className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0"
-                    style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-                  >
-                    All Upcoming
-                  </button>
-                )}
+                <button
+                  onClick={() => { setHomeDate(""); setHomeFilter("all"); }}
+                  className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0 transition-colors"
+                  style={{
+                    background: homeDate === "" ? "var(--primary)" : "var(--bg-card)",
+                    color: homeDate === "" ? "#fff" : "var(--text-2)",
+                    borderColor: homeDate === "" ? "var(--primary)" : "var(--border)",
+                  }}
+                >
+                  All Upcoming
+                </button>
               </div>
 
               {/* Filter pills */}
@@ -188,21 +190,18 @@ export default function NursePage() {
                 >
                   Today
                 </button>
-                {["ontheway", "all"].map((f) => (
-                  <button
-                    key={f}
-                    className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
-                    style={{
-                      background: homeFilter === f ? "var(--primary)" : "var(--bg-card)",
-                      color: homeFilter === f ? "#fff" : "var(--text-2)",
-                      border: `1px solid ${homeFilter === f ? "var(--primary)" : "var(--border)"}`,
-                    }}
-                    onClick={() => setHomeFilter(f)}
-                  >
-                    {f === "all" ? "All" : f === "ontheway" ? "On Way" : "Active"}
-                    <span className="ml-1 opacity-70">{homeCounts[f] ?? 0}</span>
-                  </button>
-                ))}
+                <button
+                  className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold"
+                  style={{
+                    background: homeFilter === "ontheway" ? "var(--primary)" : "var(--bg-card)",
+                    color: homeFilter === "ontheway" ? "#fff" : "var(--text-2)",
+                    border: `1px solid ${homeFilter === "ontheway" ? "var(--primary)" : "var(--border)"}`,
+                  }}
+                  onClick={() => setHomeFilter("ontheway")}
+                >
+                  On Way
+                  <span className="ml-1 opacity-70">{homeCounts["ontheway"] ?? 0}</span>
+                </button>
               </div>
 
               <div className="space-y-3">

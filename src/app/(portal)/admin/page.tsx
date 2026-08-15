@@ -480,15 +480,17 @@ export default function AdminPage() {
                 className="flex-1 px-3 py-2.5 rounded-xl border text-xs outline-none"
                 style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-2)" }}
               />
-              {homeDate && (
-                <button
-                  onClick={() => setHomeDate("")}
-                  className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0"
-                  style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-                >
-                  All Upcoming
-                </button>
-              )}
+              <button
+                onClick={() => { setHomeDate(""); setHomeFilter("all"); }}
+                className="px-3 py-2.5 rounded-xl border text-xs font-semibold shrink-0 transition-colors"
+                style={{
+                  background: homeDate === "" ? "var(--primary)" : "var(--bg-card)",
+                  color: homeDate === "" ? "#fff" : "var(--text-2)",
+                  borderColor: homeDate === "" ? "var(--primary)" : "var(--border)",
+                }}
+              >
+                All Upcoming
+              </button>
             </div>
 
             {/* Filter pills */}
@@ -504,7 +506,7 @@ export default function AdminPage() {
               >
                 Today
               </button>
-              {["unassigned", "assigned", "ontheway", "all"].map((f) => (
+              {["unassigned", "assigned", "ontheway"].map((f) => (
                 <button
                   key={f}
                   className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
@@ -515,7 +517,7 @@ export default function AdminPage() {
                   }}
                   onClick={() => setHomeFilter(f)}
                 >
-                  {f === "all" ? "All" : f === "ontheway" ? "On Way" : f === "progress" ? "Active" : f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f === "ontheway" ? "On Way" : f === "progress" ? "Active" : f.charAt(0).toUpperCase() + f.slice(1)}
                   <span className="ml-1 opacity-70">{homeCounts[f] ?? ""}</span>
                 </button>
               ))}
