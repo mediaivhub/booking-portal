@@ -763,6 +763,7 @@ export default function AdminPage() {
       {assignTarget && (
         <AssignDropdown
           nurses={nurses}
+          currentNurseId={assignTarget.nurse?.id}
           onSelect={handleAssign}
           onClose={() => setAssignTarget(null)}
         />

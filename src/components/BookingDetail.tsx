@@ -326,6 +326,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       {showAssign && (
         <AssignDropdown
           nurses={nurses}
+          currentNurseId={booking.nurse?.id}
           onSelect={handleAssign}
           onClose={() => setShowAssign(false)}
         />
