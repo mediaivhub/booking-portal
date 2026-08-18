@@ -95,13 +95,14 @@ export async function GET(req: NextRequest) {
     { header: "Created At", key: "createdAt", width: 18 },
   ];
   sheet.getRow(1).font = { bold: true };
+  sheet.getColumn("bookingDate").numFmt = "dd/mm/yyyy";
 
   for (const b of bookings) {
     sheet.addRow({
       taskId: b.taskId,
       orderId: b.orderId || "",
       jobId: b.jobId || "",
-      bookingDate: b.bookingDate ? b.bookingDate.toISOString().slice(0, 10) : "",
+      bookingDate: b.bookingDate || "",
       timeSlot: b.timeSlot || "",
       status: b.status,
       clientName: b.client.name,
