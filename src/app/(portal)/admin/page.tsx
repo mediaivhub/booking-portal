@@ -226,7 +226,12 @@ export default function AdminPage() {
     if (serviceFilter) params.service = serviceFilter;
     if (range.dateFrom) params.dateFrom = range.dateFrom;
     if (range.dateTo) params.dateTo = range.dateTo;
-    window.open(api.bookings.exportUrl(params), "_blank");
+    const link = document.createElement("a");
+    link.href = api.bookings.exportUrl(params);
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   async function toggleNurseActive(nurse: NurseInfo) {
