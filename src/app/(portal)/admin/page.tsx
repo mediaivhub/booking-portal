@@ -274,6 +274,9 @@ export default function AdminPage() {
   }
 
   const totalPages = Math.max(1, Math.ceil(bookingsTotal / PAGE_SIZE));
+  // Inactive nurses can't be picked when creating or (re)assigning a booking —
+  // they still show up in Team and the History filter for past records.
+  const activeNurses = nurses.filter((n) => n.isActive !== false);
 
   const filterUI = (
     <>
@@ -782,7 +785,7 @@ export default function AdminPage() {
           isAdmin
           onClose={() => setDetailId(null)}
           onUpdate={refreshCurrentView}
-          nurses={nurses}
+          nurses={activeNurses}
         />
       )}
 
@@ -796,7 +799,7 @@ export default function AdminPage() {
 
       {assignTarget && (
         <AssignDropdown
-          nurses={nurses}
+          nurses={activeNurses}
           currentNurseId={assignTarget.nurse?.id}
           onSelect={handleAssign}
           onClose={() => setAssignTarget(null)}
@@ -805,7 +808,7 @@ export default function AdminPage() {
 
       {showCreate && (
         <CreateBookingModal
-          nurses={nurses}
+          nurses={activeNurses}
           onClose={() => setShowCreate(false)}
           onCreated={refreshCurrentView}
         />
