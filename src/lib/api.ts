@@ -45,6 +45,12 @@ export const api = {
       }),
     remove: (id: number) =>
       request(`/bookings/${id}`, { method: "DELETE" }),
+    exportUrl: (params?: Record<string, string>) => {
+      const qs = params && Object.keys(params).length
+        ? "?" + new URLSearchParams(params).toString()
+        : "";
+      return `${BASE}/bookings/export${qs}`;
+    },
   },
 
   nurses: {

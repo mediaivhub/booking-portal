@@ -13,6 +13,7 @@ import CreateBookingModal from "@/components/CreateBookingModal";
 import AddNurseModal from "@/components/AddNurseModal";
 import ResetPasswordModal from "@/components/ResetPasswordModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import ExportModal from "@/components/ExportModal";
 import DatePicker from "@/components/DatePicker";
 import DateRangePicker from "@/components/DateRangePicker";
 import Select from "@/components/Select";
@@ -52,6 +53,7 @@ export default function AdminPage() {
   const [assignTarget, setAssignTarget] = useState<BookingData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BookingData | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddNurse, setShowAddNurse] = useState(false);
   const [resetPasswordTarget, setResetPasswordTarget] = useState<NurseInfo | null>(null);
@@ -214,6 +216,17 @@ export default function AdminPage() {
       toast((err as Error).message);
     }
     setDeleting(false);
+  }
+
+  function handleExport(range: { dateFrom?: string; dateTo?: string }) {
+    const params: Record<string, string> = {};
+    if (filter !== "all") params.status = filter;
+    if (search) params.search = search;
+    if (nurseFilter) params.nurseId = nurseFilter;
+    if (serviceFilter) params.service = serviceFilter;
+    if (range.dateFrom) params.dateFrom = range.dateFrom;
+    if (range.dateTo) params.dateTo = range.dateTo;
+    window.open(api.bookings.exportUrl(params), "_blank");
   }
 
   async function toggleNurseActive(nurse: NurseInfo) {
@@ -566,7 +579,22 @@ export default function AdminPage() {
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em", color: "var(--text-1)" }}>History</span>
-              <span className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>{bookingsTotal} total</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>{bookingsTotal} total</span>
+                <button
+                  type="button"
+                  onClick={() => setShowExport(true)}
+                  title="Export"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center border transition-colors hover:brightness-90"
+                  style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+                >
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {filterUI}
@@ -800,6 +828,13 @@ export default function AdminPage() {
           loading={deleting}
           onConfirm={handleDelete}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {showExport && (
+        <ExportModal
+          onClose={() => setShowExport(false)}
+          onExport={handleExport}
         />
       )}
     </div>
