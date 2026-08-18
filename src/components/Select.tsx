@@ -64,9 +64,9 @@ export default function Select({ value, onChange, options, className, style }: P
 
       {open && createPortal(
         <>
-          <div className="fixed inset-0 z-[149]" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[250]" onClick={() => setOpen(false)} />
           <div
-            className="fixed z-[150] rounded-2xl p-1.5 overflow-y-auto"
+            className="fixed z-[251] rounded-2xl p-1.5 overflow-y-auto"
             style={{
               ...popupStyle,
               width: `${POPUP_WIDTH}px`,
