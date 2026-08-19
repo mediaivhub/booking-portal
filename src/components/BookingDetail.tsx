@@ -34,6 +34,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
   const [booking, setBooking] = useState<DetailData | null>(null);
   const [tab, setTab] = useState<"details" | "client" | "history">("details");
   const [editing, setEditing] = useState(false);
+  const [editingClient, setEditingClient] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [showAssign, setShowAssign] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
@@ -64,17 +65,25 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       bookingDate: booking!.bookingDate ? booking!.bookingDate.split("T")[0] : "",
       paymentMethod: booking!.paymentMethod || "",
       orderId: booking!.orderId || "",
-      clientName: booking!.client.name || "",
-      clientPhone: booking!.client.phone || "",
     });
     setEditing(true);
+  }
+
+  function startEditClient() {
+    setEditData({
+      clientName: booking!.client.name || "",
+      clientPhone: booking!.client.phone || "",
+      clientEmail: booking!.client.email || "",
+    });
+    setEditingClient(true);
   }
 
   async function saveEdit() {
     try {
       await api.bookings.edit(booking!.id, editData);
-      toast("Booking updated");
+      toast(editingClient ? "Client updated" : "Booking updated");
       setEditing(false);
+      setEditingClient(false);
       const updated = await api.bookings.get(bookingId);
       setBooking(updated);
       onUpdate();
@@ -212,8 +221,6 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
             <EditField label="Description" value={editData.description} onChange={(v) => setEditData({ ...editData, description: v })} multiline />
             <EditField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} />
-            <EditField label="Client Name" value={editData.clientName} onChange={(v) => setEditData({ ...editData, clientName: v })} />
-            <EditField label="Client Phone" value={editData.clientPhone} onChange={(v) => setEditData({ ...editData, clientPhone: v })} />
             <div className="flex gap-2 pt-2">
               <button
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
@@ -233,12 +240,45 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
           </div>
         )}
 
-        {tab === "client" && (
+        {tab === "client" && !editingClient && (
           <>
+            {isAdmin && canEdit && (
+              <button
+                className="w-full py-2 rounded-xl text-xs font-semibold border mb-3"
+                style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+                onClick={startEditClient}
+              >
+                Edit Client
+              </button>
+            )}
             <DetailRow label="Name" value={booking.client.name} />
             <DetailRow label="Phone" value={booking.client.phone} isPhone />
             <DetailRow label="Email" value={booking.client.email} />
           </>
+        )}
+
+        {tab === "client" && editingClient && (
+          <div className="space-y-3">
+            <EditField label="Client Name" value={editData.clientName} onChange={(v) => setEditData({ ...editData, clientName: v })} />
+            <EditField label="Client Phone" value={editData.clientPhone} onChange={(v) => setEditData({ ...editData, clientPhone: v })} />
+            <EditField label="Client Email" value={editData.clientEmail} onChange={(v) => setEditData({ ...editData, clientEmail: v })} />
+            <div className="flex gap-2 pt-2">
+              <button
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
+                style={{ background: "var(--primary)" }}
+                onClick={saveEdit}
+              >
+                Save Changes
+              </button>
+              <button
+                className="px-4 py-3 rounded-xl text-sm font-semibold border"
+                style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+                onClick={() => setEditingClient(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
 
         {tab === "history" && (

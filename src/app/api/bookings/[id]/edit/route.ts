@@ -38,7 +38,8 @@ export async function PATCH(
     updateData.paymentMethod = body.paymentMethod;
   if (body.orderId !== undefined) updateData.orderId = body.orderId;
 
-  if (body.clientName || body.clientPhone) {
+  const clientChanged = body.clientName || body.clientPhone || body.clientEmail;
+  if (clientChanged) {
     const client = await prisma.client.findUnique({
       where: { id: booking.clientId },
     });
@@ -48,6 +49,7 @@ export async function PATCH(
         data: {
           ...(body.clientName && { name: body.clientName }),
           ...(body.clientPhone && { phone: body.clientPhone }),
+          ...(body.clientEmail && { email: body.clientEmail }),
         },
       });
     }
@@ -62,9 +64,10 @@ export async function PATCH(
     },
   });
 
-  const changes = Object.keys(updateData)
-    .map((k) => k.replace(/([A-Z])/g, " $1").toLowerCase())
-    .join(", ");
+  const changes = [
+    ...Object.keys(updateData).map((k) => k.replace(/([A-Z])/g, " $1").toLowerCase()),
+    ...(clientChanged ? ["client details"] : []),
+  ].join(", ");
 
   await prisma.bookingHistory.create({
     data: {
