@@ -59,16 +59,9 @@ export default function BookingCard({
       onClick={() => onDetail(booking)}
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="min-w-0">
-          <span className="text-xs font-mono font-bold" style={{ color: "var(--primary)" }}>
-            {booking.taskId}
-          </span>
-          {booking.orderId && (
-            <div className="text-[10px] font-mono truncate" style={{ color: "var(--text-3)" }}>
-              Order: {booking.orderId}
-            </div>
-          )}
-        </div>
+        <span className="text-xs font-mono font-bold" style={{ color: "var(--primary)" }}>
+          {booking.taskId}
+        </span>
         <StatusBadge status={booking.status} />
       </div>
 
@@ -102,6 +95,16 @@ export default function BookingCard({
               <circle cx="12" cy="10" r="3" />
             </svg>
             <span className="text-xs line-clamp-2">{booking.address}</span>
+          </div>
+        )}
+
+        {booking.orderId && (
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="1" />
+            </svg>
+            <span>Order: {booking.orderId}</span>
           </div>
         )}
       </div>
