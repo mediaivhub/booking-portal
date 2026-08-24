@@ -59,9 +59,16 @@ export default function BookingCard({
       onClick={() => onDetail(booking)}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-mono font-bold" style={{ color: "var(--primary)" }}>
-          {booking.taskId}
-        </span>
+        <div className="min-w-0">
+          <span className="text-xs font-mono font-bold" style={{ color: "var(--primary)" }}>
+            {booking.taskId}
+          </span>
+          {booking.orderId && (
+            <div className="text-[10px] font-mono truncate" style={{ color: "var(--text-3)" }}>
+              Order: {booking.orderId}
+            </div>
+          )}
+        </div>
         <StatusBadge status={booking.status} />
       </div>
 
