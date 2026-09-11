@@ -5,9 +5,13 @@ import StatusBadge from "./StatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import AssignDropdown from "./AssignDropdown";
 import DatePicker from "./DatePicker";
+import TimePicker from "./TimePicker";
+import Select from "./Select";
 import ConfirmModal from "./ConfirmModal";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
+import { SERVICES, PAYMENT_METHODS } from "@/lib/constants";
+import { formatTime12, parseTime12 } from "@/lib/time";
 import type { BookingData } from "./BookingCard";
 
 interface DetailData extends BookingData {
@@ -58,12 +62,12 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
 
   function startEdit() {
     setEditData({
-      service: booking!.service || "",
+      service: booking!.service || SERVICES[0],
       address: booking!.address || "",
       description: booking!.description || "",
-      timeSlot: booking!.timeSlot || "",
+      timeSlot: parseTime12(booking!.timeSlot || ""),
       bookingDate: booking!.bookingDate ? booking!.bookingDate.split("T")[0] : "",
-      paymentMethod: booking!.paymentMethod || "",
+      paymentMethod: booking!.paymentMethod || PAYMENT_METHODS[0],
       orderId: booking!.orderId || "",
     });
     setEditing(true);
@@ -80,7 +84,10 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
 
   async function saveEdit() {
     try {
-      await api.bookings.edit(booking!.id, editData);
+      const payload = editData.timeSlot
+        ? { ...editData, timeSlot: formatTime12(editData.timeSlot) }
+        : editData;
+      await api.bookings.edit(booking!.id, payload);
       toast(editingClient ? "Client updated" : "Booking updated");
       setEditing(false);
       setEditingClient(false);
@@ -214,13 +221,13 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
 
         {tab === "details" && editing && (
           <div className="space-y-3">
-            <EditField label="Service" value={editData.service} onChange={(v) => setEditData({ ...editData, service: v })} />
+            <EditSelectField label="Service" value={editData.service} onChange={(v) => setEditData({ ...editData, service: v })} options={SERVICES} />
             <EditField label="Order ID" value={editData.orderId} onChange={(v) => setEditData({ ...editData, orderId: v })} />
-            <EditField label="Time Slot" value={editData.timeSlot} onChange={(v) => setEditData({ ...editData, timeSlot: v })} />
+            <EditTimeField label="Time Slot" value={editData.timeSlot} onChange={(v) => setEditData({ ...editData, timeSlot: v })} />
             <EditField label="Date" value={editData.bookingDate} onChange={(v) => setEditData({ ...editData, bookingDate: v })} type="date" />
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
             <EditField label="Description" value={editData.description} onChange={(v) => setEditData({ ...editData, description: v })} multiline />
-            <EditField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} />
+            <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
             <div className="flex gap-2 pt-2">
               <button
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
@@ -465,6 +472,39 @@ function EditField({
           style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
         />
       )}
+    </div>
+  );
+}
+
+function EditSelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-3)" }}>
+        {label}
+      </label>
+      <Select
+        value={value}
+        onChange={onChange}
+        options={options.map((opt) => ({ label: opt, value: opt }))}
+        className="w-full px-3 py-2 rounded-xl border outline-none text-sm"
+        style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
+      />
+    </div>
+  );
+}
+
+function EditTimeField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-3)" }}>
+        {label}
+      </label>
+      <TimePicker
+        value={value}
+        onChange={onChange}
+        className="w-full px-3 py-2 rounded-xl border outline-none text-sm"
+        style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
+      />
     </div>
   );
 }

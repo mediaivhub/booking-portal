@@ -6,6 +6,8 @@ import { toast } from "./Toast";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import Select from "./Select";
+import { SERVICES, PAYMENT_METHODS } from "@/lib/constants";
+import { formatTime12 } from "@/lib/time";
 
 interface Nurse {
   id: number;
@@ -17,20 +19,6 @@ interface Props {
   onClose: () => void;
   onCreated: () => void;
 }
-
-function formatTime12(time24: string) {
-  if (!time24) return "";
-  const [hStr, mStr] = time24.split(":");
-  let h = parseInt(hStr, 10);
-  const period = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
-  return `${String(h).padStart(2, "0")}:${mStr} ${period}`;
-}
-
-const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Injection", "Peptide Therapy", "NAD+ Infusion"];
-
-const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Online", "Bank Transfer", "Prepaid"];
 
 export default function CreateBookingModal({ nurses, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
