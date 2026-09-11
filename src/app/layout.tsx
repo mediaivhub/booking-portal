@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Providers from "@/components/Providers";
+import PrivacyOverlay from "@/components/PrivacyOverlay";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geist.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
+        <PrivacyOverlay />
       </body>
     </html>
   );
