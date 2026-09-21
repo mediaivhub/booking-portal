@@ -28,6 +28,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     clientEmail: "",
     orderId: "",
     address: "",
+    description: "",
     bookingDate: "",
     startTime: "09:00",
     endTime: "09:30",
@@ -112,6 +113,8 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
           </div>
 
           <FormField label="Address" value={form.address} onChange={(v) => update("address", v)} placeholder="Full address in Dubai" />
+
+          <FormField label="Description" value={form.description} onChange={(v) => update("description", v)} placeholder="Notes for this booking" multiline />
 
           <div className="grid grid-cols-2 gap-2">
             <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />

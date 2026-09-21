@@ -67,6 +67,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
     setEditData({
       service: booking!.service || SERVICES[0],
       address: booking!.address || "",
+      description: booking!.description || "",
       timeSlot: parseTime12(booking!.timeSlot || ""),
       bookingDate: booking!.bookingDate ? booking!.bookingDate.split("T")[0] : "",
       paymentMethod: booking!.paymentMethod || PAYMENT_METHODS[0],
@@ -279,6 +280,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
               <EditTimeField label="Time Slot" value={editData.timeSlot} onChange={(v) => setEditData({ ...editData, timeSlot: v })} />
             </div>
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
+            <EditField label="Description" value={editData.description} onChange={(v) => setEditData({ ...editData, description: v })} multiline />
             <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
             <EditField label="Payment to Collect (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
             <DripVialSection nurseId={booking.nurse?.id ?? null} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
