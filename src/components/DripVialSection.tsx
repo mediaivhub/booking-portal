@@ -43,6 +43,7 @@ interface NurseVial {
   total: number;
   pool: number;
   left: number;
+  usages: { bookingId: number; taskId: string; qty: number; completed: boolean }[];
 }
 
 const KIND_BADGE = {
@@ -103,7 +104,8 @@ export default function DripVialSection({
 
   // What's left of a vial for row (i, j): what the nurse still has (assigned minus used in other bookings) minus other rows here.
   const remaining = (itemId: string, i: number, j: number) => {
-    const held = vials.find((v) => String(v.id) === itemId)?.left ?? 0;
+    const info = vials.find((v) => String(v.id) === itemId);
+    const held = info ? Math.min(info.left, info.pool) : 0;
     const usedElsewhere = drips.reduce(
       (sum, d, di) => sum + d.vials.reduce((s2, r, ri) => s2 + (r.itemId === itemId && !(di === i && ri === j) ? Number(r.qty) || 0 : 0), 0),
       0
@@ -270,11 +272,21 @@ export default function DripVialSection({
                         const info = vials.find((x) => String(x.id) === v.itemId);
                         if (!info) return null;
                         return (
-                          <p className="text-[12px] font-semibold flex flex-wrap gap-x-4 px-1">
-                            <span style={{ color: "#e65100" }}>{info.qty} {info.unit} assigned</span>
-                            <span style={{ color: "#27ae60" }}>{info.total} {info.unit} total avl</span>
-                            {max < info.qty && <span style={{ color: "var(--text-3)" }}>{max} {info.unit} left for this row</span>}
+                          <>
+                          <p className="text-[12px] font-semibold flex flex-wrap justify-between gap-x-4 px-1">
+                            <span style={{ color: "#27ae60" }}>{info.pool} {info.unit} available</span>
+                            <span style={{ color: "var(--text-3)" }}>{info.total} {info.unit} total</span>
+                            {max < info.pool && <span className="w-full" style={{ color: "var(--text-3)" }}>{max} {info.unit} left for this row</span>}
                           </p>
+                          {info.usages.map((u) => (
+                            <p key={u.bookingId} className="text-[12px] font-semibold px-1" style={{ color: u.completed ? "#e65100" : "#3b82f6" }}>
+                              {u.qty} {info.unit} {u.completed ? "used" : "assigned"} for {u.taskId}
+                            </p>
+                          ))}
+                          {info.usages.length === 0 && (
+                            <p className="text-[12px] font-semibold px-1" style={{ color: "var(--text-3)" }}>0 {info.unit} used for booking</p>
+                          )}
+                          </>
                         );
                       })()}
                     </div>

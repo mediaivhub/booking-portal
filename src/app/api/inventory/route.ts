@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
     orderBy: { item: { name: "asc" } },
   });
   const usage = isAdminLookup ? await vialUsage(mine.map((a) => a.itemId), exclude) : null;
+  const usages = isAdminLookup ? await vialUsages(mine.map((a) => a.itemId)) : null;
   return Response.json(
     mine.map((a) => {
       const total = Number(a.item.qty);
@@ -70,6 +71,7 @@ export async function GET(req: NextRequest) {
         ...(usage
           ? {
               total,
+              usages: usages?.get(a.itemId) ?? [],
               // Stock not yet used in any booking, and what this nurse still has of their assigned amount.
               pool: Math.max(0, round2(total - (usage.all.get(a.itemId) ?? 0))),
               left: Math.max(0, round2(Number(a.qty) - (usage.byNurse.get(`${a.itemId}:${nurseId}`) ?? 0))),

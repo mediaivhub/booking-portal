@@ -232,7 +232,7 @@ function VialCard({
         {isAdmin && (
           <div className="flex flex-col items-end gap-1 shrink-0 ml-2 text-right">
             <span className="text-[11px] font-semibold" style={{ color: holder ? "#3b82f6" : "var(--text-3)" }}>
-              Currently with: {holder ? holder.nurseName : "Unassigned"}
+              Currently with: {holder ? holder.nurseName : v.location ?? "Unassigned"}
             </span>
             {remaining <= 0 && v.qty > 0 && (
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase" style={{ background: "#fff3e0", color: "#e65100" }}>
