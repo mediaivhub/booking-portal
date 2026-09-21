@@ -14,14 +14,17 @@ interface Props {
   options: SelectOption[];
   className?: string;
   style?: React.CSSProperties;
+  /** Widen the popup (at least the trigger width, up to the screen) and wrap long labels instead of truncating. */
+  wide?: boolean;
 }
 
 const POPUP_WIDTH = 260;
 const MAX_HEIGHT = 280;
 
-export default function Select({ value, onChange, options, className, style }: Props) {
+export default function Select({ value, onChange, options, className, style, wide }: Props) {
   const [open, setOpen] = useState(false);
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
+  const [popupWidth, setPopupWidth] = useState(POPUP_WIDTH);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selected = options.find((o) => o.value === value);
@@ -29,7 +32,9 @@ export default function Select({ value, onChange, options, className, style }: P
   function openPicker() {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      const alignRight = rect.left + POPUP_WIDTH > window.innerWidth - 16;
+      const width = wide ? Math.min(Math.max(rect.width, 380), window.innerWidth - 32) : POPUP_WIDTH;
+      setPopupWidth(width);
+      const alignRight = rect.left + width > window.innerWidth - 16;
       const spaceBelow = window.innerHeight - rect.bottom - 16;
       const spaceAbove = rect.top - 16;
       const upward = spaceBelow < MAX_HEIGHT && spaceAbove > spaceBelow;
@@ -69,7 +74,7 @@ export default function Select({ value, onChange, options, className, style }: P
             className="fixed z-[251] rounded-2xl p-1.5 overflow-y-auto"
             style={{
               ...popupStyle,
-              width: `${POPUP_WIDTH}px`,
+              width: `${popupWidth}px`,
               maxWidth: "calc(100vw - 32px)",
               background: "var(--bg-card)",
               border: "1px solid var(--border)",
@@ -93,7 +98,7 @@ export default function Select({ value, onChange, options, className, style }: P
                     fontWeight: isSelected ? 600 : 400,
                   }}
                 >
-                  <span className="truncate">{o.label}</span>
+                  <span className={wide ? "break-words" : "truncate"}>{o.label}</span>
                   {isSelected && (
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" strokeWidth="2.5" className="shrink-0"><path d="M20 6L9 17l-5-5" /></svg>
                   )}

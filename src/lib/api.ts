@@ -45,6 +45,8 @@ export const api = {
       }),
     remove: (id: number) =>
       request(`/bookings/${id}`, { method: "DELETE" }),
+    setDrips: (id: number, drips: unknown[]) =>
+      request(`/bookings/${id}/vials`, { method: "PUT", body: JSON.stringify({ drips }) }),
     exportUrl: (params?: Record<string, string>) => {
       const qs = params && Object.keys(params).length
         ? "?" + new URLSearchParams(params).toString()
@@ -63,6 +65,31 @@ export const api = {
       request(`/nurses/${id}`, { method: "PATCH", body: JSON.stringify({ isActive }) }),
     resetPassword: (id: number, password: string) =>
       request(`/nurses/${id}`, { method: "PATCH", body: JSON.stringify({ password }) }),
+  },
+
+  inventory: {
+    list: (nurseId?: number, excludeBooking?: number) => {
+      const qs = new URLSearchParams();
+      if (nurseId) qs.set("nurseId", String(nurseId));
+      if (excludeBooking) qs.set("excludeBooking", String(excludeBooking));
+      return request(`/inventory${qs.size ? `?${qs}` : ""}`);
+    },
+    create: (data: Record<string, unknown>) =>
+      request("/inventory", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: Record<string, unknown>) =>
+      request(`/inventory/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    remove: (id: number) => request(`/inventory/${id}`, { method: "DELETE" }),
+    assign: (id: number, nurseId: number | null) =>
+      request(`/inventory/${id}/assign`, { method: "PUT", body: JSON.stringify({ nurseId }) }),
+  },
+
+  medicines: {
+    list: (excludeBooking?: number) => request(`/medicines${excludeBooking ? `?excludeBooking=${excludeBooking}` : ""}`),
+    create: (data: Record<string, unknown>) =>
+      request("/medicines", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: Record<string, unknown>) =>
+      request(`/medicines/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    remove: (id: number) => request(`/medicines/${id}`, { method: "DELETE" }),
   },
 
   push: {

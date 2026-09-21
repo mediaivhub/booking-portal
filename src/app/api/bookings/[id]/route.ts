@@ -18,6 +18,7 @@ export async function GET(
       client: true,
       nurse: { select: { id: true, name: true, initials: true, phone: true } },
       history: { orderBy: { createdAt: "desc" } },
+      drips: { include: { medicines: { include: { medicine: { select: { name: true, unit: true } } }, orderBy: { id: "asc" } }, vials: { include: { item: { select: { name: true, serial: true, unit: true } } }, orderBy: { id: "asc" } } }, orderBy: { id: "asc" } },
     },
   });
 

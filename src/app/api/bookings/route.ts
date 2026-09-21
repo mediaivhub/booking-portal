@@ -1,3 +1,4 @@
+import { validateDrips, dripsCreateData } from "@/lib/booking-vials";
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -153,6 +154,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
+  const checked = await validateDrips(body.drips, body.nurseId ? Number(body.nurseId) : null);
+  if ("error" in checked) return Response.json({ error: checked.error }, { status: 400 });
+
   let client = await prisma.client.findFirst({
     where: { name: body.clientName, phone: body.clientPhone },
   });
@@ -190,6 +194,10 @@ export async function POST(req: NextRequest) {
       nurse: { select: { id: true, name: true, initials: true, email: true } },
     },
   });
+
+  for (const d of dripsCreateData(checked.drips)) {
+    await prisma.bookingDrip.create({ data: { ...d, bookingId: booking.id } });
+  }
 
   await prisma.bookingHistory.create({
     data: {

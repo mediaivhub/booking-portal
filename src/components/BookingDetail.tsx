@@ -7,6 +7,7 @@ import AssignDropdown from "./AssignDropdown";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import Select from "./Select";
+import DripVialSection, { DripLine, toPayload } from "./DripVialSection";
 import ConfirmModal from "./ConfirmModal";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
@@ -15,6 +16,7 @@ import { formatTime12, parseTime12 } from "@/lib/time";
 import type { BookingData } from "./BookingCard";
 
 interface DetailData extends BookingData {
+  drips?: { id: number; kind: "cs_drip" | "upsell"; dripName: string | null; nss: string | null; nssQty: number; medicines: { id: number; medicineId: number; qty: string | number; medicine: { name: string; unit: string } }[]; vials: { id: number; itemId: number; qty: string | number; item: { name: string; serial: string; unit: string } }[] }[];
   history?: { id: number; action: string; performedBy?: string; createdAt: string }[];
 }
 
@@ -44,6 +46,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
   const [showStatus, setShowStatus] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [dripLines, setDripLines] = useState<DripLine[]>([]);
 
   useEffect(() => {
     api.bookings.get(bookingId).then(setBooking);
@@ -64,12 +67,19 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
     setEditData({
       service: booking!.service || SERVICES[0],
       address: booking!.address || "",
-      description: booking!.description || "",
       timeSlot: parseTime12(booking!.timeSlot || ""),
       bookingDate: booking!.bookingDate ? booking!.bookingDate.split("T")[0] : "",
       paymentMethod: booking!.paymentMethod || PAYMENT_METHODS[0],
       orderId: booking!.orderId || "",
     });
+    setDripLines((booking!.drips ?? []).map((d) => ({
+      kind: d.kind,
+      dripName: d.dripName ?? "",
+      nss: d.nss ?? "",
+      nssQty: String(d.nssQty ?? 1),
+      vials: d.vials.map((v) => ({ itemId: String(v.itemId), qty: String(Number(v.qty)) })),
+      medicines: (d.medicines ?? []).map((m) => ({ medicineId: String(m.medicineId), qty: String(Number(m.qty)) })),
+    })));
     setEditing(true);
   }
 
@@ -88,6 +98,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
         ? { ...editData, timeSlot: formatTime12(editData.timeSlot) }
         : editData;
       await api.bookings.edit(booking!.id, payload);
+      if (editing && booking!.nurse) await api.bookings.setDrips(booking!.id, toPayload(dripLines));
       toast(editingClient ? "Client updated" : "Booking updated");
       setEditing(false);
       setEditingClient(false);
@@ -198,11 +209,49 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
               </div>
             )}
             <DetailRow label="Address" value={booking.address} isAddress />
-            <DetailRow label="Description" value={booking.description} />
+            {booking.description && <DetailRow label="Description" value={booking.description} />}
             <DetailRow label="Order ID" value={booking.orderId} />
             <DetailRow label="Job ID" value={booking.jobId} />
             <DetailRow label="Service" value={booking.service} />
             <DetailRow label="Payment" value={booking.paymentMethod} />
+
+            <div className="py-3.5" style={{ borderTop: "1px solid var(--border)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Drip &amp; Vial Tracking</p>
+              {!booking.drips?.length && (
+                <p className="text-sm" style={{ color: "var(--text-3)" }}>
+                  No drips recorded{canEdit ? " — tap Edit Booking to add" : ""}
+                </p>
+              )}
+              <div className="space-y-3">
+                {(booking.drips ?? []).map((d, i) => (
+                  <div key={d.id} className="text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold" style={{ color: "var(--primary-text)" }}>Drip {i + 1}</span>
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md"
+                        style={d.kind === "upsell" ? { background: "rgba(230,81,0,0.12)", color: "#e65100" } : { background: "rgba(59,130,246,0.14)", color: "#3b82f6" }}
+                      >
+                        {d.kind === "upsell" ? "Upsell Add-on" : "CS Drip"}
+                      </span>
+                    </div>
+                    <p style={{ color: "var(--text-1)" }}>{[d.dripName, d.nss ? `NSS ${d.nss} × ${d.nssQty}` : null].filter(Boolean).join(" · ") || "—"}</p>
+                    {d.vials.map((v) => (
+                      <p key={v.id} className="flex justify-between" style={{ color: "var(--text-2)" }}>
+                        <span>{v.item.name} <span style={{ color: "var(--text-3)" }}>({v.item.serial})</span></span>
+                        <span className="font-semibold">{Number(v.qty)} {v.item.unit}</span>
+                      </p>
+                    ))}
+                    {(d.medicines ?? []).map((m) => (
+                      <p key={m.id} className="flex justify-between" style={{ color: "var(--text-2)" }}>
+                        <span>{m.medicine.name} <span style={{ color: "var(--text-3)" }}>(Bulk)</span></span>
+                        <span className="font-semibold">{Number(m.qty)} {m.medicine.unit}</span>
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <DetailRow label="Created" value={booking.createdAt ? new Date(booking.createdAt).toLocaleString() : undefined} />
             <DetailRow label="Created By" value={createdBy} />
             <DetailRow label="Last Updated" value={booking.updatedAt ? new Date(booking.updatedAt).toLocaleString() : undefined} />
@@ -223,11 +272,13 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
           <div className="space-y-3">
             <EditSelectField label="Service" value={editData.service} onChange={(v) => setEditData({ ...editData, service: v })} options={SERVICES} />
             <EditField label="Order ID" value={editData.orderId} onChange={(v) => setEditData({ ...editData, orderId: v })} />
-            <EditTimeField label="Time Slot" value={editData.timeSlot} onChange={(v) => setEditData({ ...editData, timeSlot: v })} />
-            <EditField label="Date" value={editData.bookingDate} onChange={(v) => setEditData({ ...editData, bookingDate: v })} type="date" />
+            <div className="grid grid-cols-2 gap-2">
+              <EditField label="Date" value={editData.bookingDate} onChange={(v) => setEditData({ ...editData, bookingDate: v })} type="date" />
+              <EditTimeField label="Time Slot" value={editData.timeSlot} onChange={(v) => setEditData({ ...editData, timeSlot: v })} />
+            </div>
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
-            <EditField label="Description" value={editData.description} onChange={(v) => setEditData({ ...editData, description: v })} multiline />
             <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
+            <DripVialSection nurseId={booking.nurse?.id ?? null} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
             <div className="flex gap-2 pt-2">
               <button
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"

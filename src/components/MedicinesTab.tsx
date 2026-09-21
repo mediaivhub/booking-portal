@@ -1,0 +1,233 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
+import { toast } from "@/components/Toast";
+import Select from "@/components/Select";
+import DatePicker from "@/components/DatePicker";
+import { INVENTORY_UNITS } from "@/lib/constants";
+import { inputStyle, Field, StatCard, fmt } from "@/components/inventory-ui";
+
+interface Medicine {
+  id: number;
+  name: string;
+  qty: number;
+  used: number;
+  unit: string;
+  expiry: string | null;
+  usages: { bookingId: number; taskId: string; qty: number; completed: boolean }[];
+}
+
+// Bulk "master" medicines held in the office inventory (admin only).
+export default function MedicinesTab() {
+  const [items, setItems] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState<Medicine | null>(null);
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
+
+  const load = useCallback(() => {
+    return api.medicines
+      .list()
+      .then(setItems)
+      .catch(() => toast("Failed to load medicines"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const q = search.toLowerCase();
+  const filtered = items.filter((m) => m.name.toLowerCase().includes(q));
+  const totalQty = items.reduce((s, m) => s + m.qty, 0);
+  const totalUsed = items.reduce((s, m) => s + m.used, 0);
+  // Stat totals only make sense in one unit; the app's default is ml.
+  const unit = items.length && items.every((m) => m.unit === items[0].unit) ? items[0].unit : "ml";
+
+  async function remove(m: Medicine) {
+    if (!confirm(`Remove ${m.name} from bulk inventory?`)) return;
+    try {
+      await api.medicines.remove(m.id);
+      load();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to remove");
+    }
+  }
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatCard label="Medicines" value={items.length} color="var(--primary-text)" />
+        <StatCard label="Master Qty" value={`${fmt(totalQty)} ${unit}`} color="var(--text-1)" />
+        <StatCard label="Used" value={`${fmt(totalUsed)} ${unit}`} color="#e65100" />
+        <StatCard label="Available" value={`${fmt(totalQty - totalUsed)} ${unit}`} color="#27ae60" />
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-bold" style={{ color: "var(--text-1)" }}>Master Medicines (Office Inventory)</h2>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="shrink-0 px-3 py-2 rounded-xl border-2 text-[13px] font-semibold"
+          style={{ borderColor: "var(--primary-text)", color: "var(--primary-text)" }}
+        >
+          + Add Medicine
+        </button>
+      </div>
+
+      <input
+        type="text"
+        placeholder="Search medicine..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+        style={inputStyle}
+      />
+
+      {loading ? (
+        <p className="text-center text-sm py-8" style={{ color: "var(--text-3)" }}>Loading...</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-center text-sm py-8" style={{ color: "var(--text-3)" }}>
+          {items.length === 0 ? "No medicines yet. Add one to get started." : "No matching medicines."}
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {filtered.map((m) => {
+            const available = Math.max(0, m.qty - m.used);
+            const usedPct = m.qty > 0 ? Math.min(100, (m.used / m.qty) * 100) : 0;
+            const expired = !!m.expiry && m.expiry < today;
+            const badge = expired
+              ? { label: "Expired", bg: "rgba(198,40,40,0.14)", color: "#c62828" }
+              : available <= 0
+                ? { label: "Out of stock", bg: "rgba(198,40,40,0.14)", color: "#c62828" }
+                : m.qty > 0 && available / m.qty < 0.2
+                  ? { label: "Low stock", bg: "#fff3e0", color: "#e65100" }
+                  : { label: "In stock", bg: "rgba(39,174,96,0.14)", color: "#27ae60" };
+
+            return (
+              <div key={m.id} className="rounded-2xl border p-3 h-full" style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}>
+                <div className="flex items-start justify-between cursor-pointer" onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
+                  <div>
+                    <p className="text-[15px] font-semibold" style={{ color: "var(--text-1)" }}>{m.name}</p>
+                    <p className="text-[11px]" style={{ color: expired ? "#c62828" : "var(--text-3)" }}>
+                      Bulk · No Serial · {expired ? "Expired" : "Exp"}: {m.expiry ?? "—"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: badge.bg, color: badge.color }}>
+                    {badge.label}
+                  </span>
+                </div>
+
+                <div className="mt-2 w-full h-2 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
+                  <div className="h-full" style={{ width: `${usedPct}%`, background: "#e65100" }} />
+                  <div className="h-full" style={{ width: `${100 - usedPct}%`, background: "#27ae60" }} />
+                </div>
+                <div className="flex justify-between mt-1.5 text-[11px] font-semibold">
+                  <span style={{ color: "#27ae60" }}>{fmt(available)} {m.unit} available</span>
+                  <span style={{ color: "var(--text-3)" }}>Master: {fmt(m.qty)} {m.unit}</span>
+                </div>
+                <div className="mt-1 space-y-0.5">
+                  {/* Open bookings only reserve stock; a completed booking makes it "used". */}
+                  {m.usages.map((u) => (
+                    <p key={u.bookingId} className="text-[11px] font-semibold" style={{ color: u.completed ? "#e65100" : "#3b82f6" }}>
+                      {fmt(u.qty)} {m.unit} {u.completed ? "used" : "assigned"} for {u.taskId}
+                    </p>
+                  ))}
+                  {m.used === 0 && (
+                    <p className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>0 {m.unit} used for booking</p>
+                  )}
+                </div>
+
+                {expanded === m.id && (
+                  <div className="mt-3 pt-3 border-t flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
+                    <button onClick={() => setEditing(m)} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>Edit medicine details</button>
+                    <button onClick={() => remove(m)} className="text-[12px] font-semibold" style={{ color: "#c62828" }}>Remove medicine</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {showAdd && <MedicineFormModal onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {editing && <MedicineFormModal medicine={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+    </div>
+  );
+}
+
+function MedicineFormModal({ medicine, onClose, onSaved }: { medicine?: Medicine; onClose: () => void; onSaved: () => void }) {
+  const isEdit = !!medicine;
+  const [form, setForm] = useState({
+    name: medicine?.name ?? "",
+    qty: medicine ? String(medicine.qty) : "",
+    unit: medicine?.unit ?? INVENTORY_UNITS[0],
+    expiry: medicine?.expiry ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const unitOptions = Array.from(new Set([...INVENTORY_UNITS, form.unit]));
+  const field = "w-full px-4 py-3 rounded-2xl border outline-none text-[15px]";
+  const fieldStyle = { background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" };
+
+  function close(after: () => void) {
+    setClosing(true);
+    setTimeout(after, 200);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const data = { ...form, qty: Number(form.qty), expiry: form.expiry || null };
+      if (medicine) await api.medicines.update(medicine.id, data);
+      else await api.medicines.create(data);
+      toast(isEdit ? "Medicine updated" : "Medicine added");
+      close(onSaved);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to save medicine");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-3"
+      style={{ background: "rgba(0,0,0,0.4)", zIndex: 100, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
+      onClick={() => close(onClose)}
+    >
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl max-h-full overflow-y-auto rounded-3xl p-6 space-y-4"
+        style={{ background: "var(--bg)", animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards` }}
+      >
+        <div className="flex items-start justify-between">
+          <h3 className="text-xl font-bold" style={{ color: "var(--text-1)" }}>{isEdit ? "Edit Bulk Medicine" : "Add Bulk Medicine"}</h3>
+          <button type="button" onClick={() => close(onClose)} aria-label="Close" className="p-1" style={{ color: "var(--text-3)" }}>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <Field label="Medicine Name">
+          <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Glutathione 200mg/ml" className={field} style={fieldStyle} />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Master Quantity">
+            <input required type="number" min="0" step="0.5" value={form.qty} onChange={(e) => setForm({ ...form, qty: e.target.value })} placeholder="300" className={field} style={fieldStyle} />
+          </Field>
+          <Field label="Unit">
+            <Select value={form.unit} onChange={(v) => setForm((f) => ({ ...f, unit: v }))} options={unitOptions.map((u) => ({ label: u, value: u }))} className={field} style={fieldStyle} />
+          </Field>
+        </div>
+        <Field label="Expiry Date">
+          <DatePicker value={form.expiry} onChange={(v) => setForm((f) => ({ ...f, expiry: v }))} className={field} style={fieldStyle} />
+        </Field>
+        <button type="submit" disabled={saving} className="w-full py-4 rounded-2xl text-base font-semibold text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>
+          {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Medicine"}
+        </button>
+      </form>
+    </div>
+  );
+}

@@ -5,6 +5,7 @@
   --primary-mid: #2d6a4f;
   --primary-light: #40916c;
   --primary-wash: rgba(27, 67, 50, 0.06);
+  --primary-text: #1b4332;
   --accent: #d4a574;
   --accent-light: #e8d5bc;
   --accent-wash: rgba(212, 165, 116, 0.12);
@@ -40,6 +41,7 @@
     --border: #2c2c2e;
     --border-light: #222222;
     --primary-wash: rgba(82, 183, 136, 0.08);
+    --primary-text: #52b788;
     --accent-wash: rgba(212, 165, 116, 0.1);
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -139,4 +141,19 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes popOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
 }

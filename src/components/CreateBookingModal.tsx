@@ -6,6 +6,7 @@ import { toast } from "./Toast";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import Select from "./Select";
+import DripVialSection, { DripLine, toPayload } from "./DripVialSection";
 import { SERVICES, PAYMENT_METHODS } from "@/lib/constants";
 import { formatTime12 } from "@/lib/time";
 
@@ -32,10 +33,10 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     endTime: "09:30",
     service: SERVICES[0],
     nurseId: "",
-    description: "",
     paymentMethod: PAYMENT_METHODS[0],
   });
   const [loading, setLoading] = useState(false);
+  const [dripLines, setDripLines] = useState<DripLine[]>([]);
   const [closing, setClosing] = useState(false);
 
   function requestClose() {
@@ -45,6 +46,8 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
 
   function update(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Vials belong to the selected nurse, so changing nurse resets them.
+    if (key === "nurseId") setDripLines([]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,6 +66,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
         // End Time is commented out for now (see JSX below) — using start time only.
         // timeSlot: `${formatTime12(startTime)} - ${formatTime12(endTime)}`,
         nurseId: form.nurseId ? parseInt(form.nurseId) : null,
+        drips: toPayload(dripLines),
       });
       toast("Booking created");
       onCreated();
@@ -81,7 +85,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
         style={{ background: "var(--bg-card)", paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)", WebkitOverflowScrolling: "touch" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 p-4 border-b" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
+        <div className="sticky top-0 z-20 p-4 border-b" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
           <div className="w-10 h-1 rounded-full mx-auto mb-3" style={{ background: "var(--border)" }} />
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold" style={{ color: "var(--text-1)" }}>New Booking</h3>
@@ -108,18 +112,20 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
 
           <FormField label="Address" value={form.address} onChange={(v) => update("address", v)} placeholder="Full address in Dubai" />
 
-          <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
+          <div className="grid grid-cols-2 gap-2">
+            <FormField label="Date" value={form.bookingDate} onChange={(v) => update("bookingDate", v)} type="date" />
 
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
-              Start Time
-            </label>
-            <TimePicker
-              value={form.startTime}
-              onChange={(v) => update("startTime", v)}
-              className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
-              style={{ background: "var(--bg)", borderColor: "var(--border)" }}
-            />
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-2)" }}>
+                Start Time
+              </label>
+              <TimePicker
+                value={form.startTime}
+                onChange={(v) => update("startTime", v)}
+                className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
+                style={{ background: "var(--bg)", borderColor: "var(--border)" }}
+              />
+            </div>
           </div>
 
           {/* End Time commented out for now — using start time only.
@@ -147,9 +153,9 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
             />
           </div>
 
-          <FormField label="Description" value={form.description} onChange={(v) => update("description", v)} multiline placeholder="Special instructions..." />
-
           <FormField label="Payment" value={form.paymentMethod} onChange={(v) => update("paymentMethod", v)} options={PAYMENT_METHODS} />
+
+          <DripVialSection nurseId={form.nurseId ? parseInt(form.nurseId) : null} drips={dripLines} onChange={setDripLines} />
 
           <button
             type="submit"
