@@ -51,7 +51,7 @@ export default function Select({ value, onChange, options, className, style, wid
   }
 
   return (
-    <div className="relative w-full flex-1">
+    <div className="relative w-full flex-1 min-w-0">
       <button
         ref={triggerRef}
         type="button"

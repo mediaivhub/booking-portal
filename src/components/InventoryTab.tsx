@@ -120,7 +120,7 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
       </div>
 
       {isAdmin ? (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <StatCard label="Vials" value={vials.length} color="var(--primary)" />
           <StatCard label="Total Qty" value={fmt(totalQty)} color="var(--text-1)" />
           <StatCard label="Used" value={fmt(totalUsed)} color="#e65100" />

@@ -186,7 +186,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: "100px", WebkitOverflowScrolling: "touch" }}>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4" style={{ paddingBottom: "100px", WebkitOverflowScrolling: "touch" }}>
         {tab === "details" && !editing && (
           <>
             {isAdmin && (
@@ -210,12 +210,12 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
               </div>
             )}
             <DetailRow label="Address" value={booking.address} isAddress />
-            {booking.description && <DetailRow label="Description" value={booking.description} />}
+            <DetailRow label="Description" value={booking.description} />
             <DetailRow label="Order ID" value={booking.orderId} />
             <DetailRow label="Job ID" value={booking.jobId} />
             <DetailRow label="Service" value={booking.service} />
             <DetailRow label="Payment" value={booking.paymentMethod} />
-            {booking.paymentHeldFor && <DetailRow label="Payment Held For" value={booking.paymentHeldFor} />}
+            {booking.paymentHeldFor && <DetailRow label="Payment to Collect" value={booking.paymentHeldFor} />}
 
             <div className="py-3.5" style={{ borderTop: "1px solid var(--border)" }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Drip &amp; Vial Tracking</p>
@@ -280,7 +280,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             </div>
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
             <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
-            <EditField label="Payment Held For (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
+            <EditField label="Payment to Collect (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
             <DripVialSection nurseId={booking.nurse?.id ?? null} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
             <div className="flex gap-2 pt-2">
               <button

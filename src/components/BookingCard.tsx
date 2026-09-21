@@ -99,6 +99,10 @@ export default function BookingCard({
           </div>
         )}
 
+        {booking.description && (
+          <p className="text-xs line-clamp-2">{booking.description}</p>
+        )}
+
         {booking.orderId && (
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
