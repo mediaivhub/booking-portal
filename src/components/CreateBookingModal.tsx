@@ -34,6 +34,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     service: SERVICES[0],
     nurseId: "",
     paymentMethod: PAYMENT_METHODS[0],
+    paymentHeldFor: "",
   });
   const [loading, setLoading] = useState(false);
   const [dripLines, setDripLines] = useState<DripLine[]>([]);
@@ -154,6 +155,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
           </div>
 
           <FormField label="Payment" value={form.paymentMethod} onChange={(v) => update("paymentMethod", v)} options={PAYMENT_METHODS} />
+          <FormField label="Payment Held For (optional)" value={form.paymentHeldFor} onChange={(v) => update("paymentHeldFor", v)} placeholder="e.g. Ahmed / Order #1234" />
 
           <DripVialSection nurseId={form.nurseId ? parseInt(form.nurseId) : null} drips={dripLines} onChange={setDripLines} />
 

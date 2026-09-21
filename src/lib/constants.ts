@@ -2,6 +2,6 @@ export const SERVICES = ["Home Services", "IV Drip", "Blood Test", "Vitamin Inje
 
 export const PAYMENT_METHODS = ["JL_Paid", "Cash on Delivery", "Card on File", "Online", "Bank Transfer", "Prepaid"];
 
-export const INVENTORY_LOCATIONS = ["Lounge DIFC"];
+export const INVENTORY_LOCATIONS = ["Lounge DIFC", "Office"];
 export const INVENTORY_UNITS = ["ml", "mg", "units"];
 export const NSS_OPTIONS = ["100 ml", "250 ml", "500 ml"];

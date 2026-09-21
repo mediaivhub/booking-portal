@@ -8,6 +8,7 @@ import DatePicker from "@/components/DatePicker";
 import { INVENTORY_LOCATIONS, INVENTORY_UNITS } from "@/lib/constants";
 import { inputStyle, Field, StatCard, fmt } from "@/components/inventory-ui";
 import MedicinesTab from "@/components/MedicinesTab";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Assignment {
   nurseId: number;
@@ -181,6 +182,8 @@ function VialCard({
   vial: Vial; isAdmin: boolean; nurses: NurseOption[]; open: boolean; onToggle: () => void; onEdit: () => void; onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const holder = v.assignments[0];
   const remaining = Math.max(0, v.qty - v.used);
@@ -201,12 +204,16 @@ function VialCard({
   }
 
   async function remove() {
-    if (!confirm(`Remove ${v.name} (${v.serial}) from inventory?`)) return;
+    setDeleting(true);
     try {
       await api.inventory.remove(v.id);
+      toast("Vial deleted");
+      setConfirmDelete(false);
       onChanged();
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Failed to remove");
+      toast(e instanceof Error ? e.message : "Failed to delete");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -232,6 +239,13 @@ function VialCard({
                 USED UP
               </span>
             )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              className="text-[11px] font-semibold"
+              style={{ color: "#c62828" }}
+            >
+              Delete
+            </button>
           </div>
         )}
       </div>
@@ -281,11 +295,17 @@ function VialCard({
             <button onClick={onEdit} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>
               Edit vial details
             </button>
-            <button onClick={remove} className="text-[12px] font-semibold" style={{ color: "#c62828" }}>
-              Remove vial from inventory
-            </button>
           </div>
         </div>
+      )}
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete vial?"
+          message={`${v.name} (${v.serial}) will be removed from inventory. This can't be undone.`}
+          onConfirm={remove}
+          onClose={() => !deleting && setConfirmDelete(false)}
+          loading={deleting}
+        />
       )}
     </div>
   );

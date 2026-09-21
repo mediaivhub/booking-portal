@@ -37,6 +37,8 @@ export async function PATCH(
   if (body.paymentMethod !== undefined)
     updateData.paymentMethod = body.paymentMethod;
   if (body.orderId !== undefined) updateData.orderId = body.orderId;
+  if (body.paymentHeldFor !== undefined)
+    updateData.paymentHeldFor = String(body.paymentHeldFor).trim() || null;
 
   const clientChanged = body.clientName || body.clientPhone || body.clientEmail;
   if (clientChanged) {

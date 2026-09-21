@@ -91,6 +91,7 @@ export async function GET(req: NextRequest) {
     { header: "Service", key: "service", width: 16 },
     { header: "Description", key: "description", width: 30 },
     { header: "Payment Method", key: "paymentMethod", width: 16 },
+    { header: "Payment Held For", key: "paymentHeldFor", width: 20 },
     { header: "Address", key: "address", width: 30 },
     { header: "Created At", key: "createdAt", width: 18 },
   ];
@@ -112,6 +113,7 @@ export async function GET(req: NextRequest) {
       service: b.service || "",
       description: b.description || "",
       paymentMethod: b.paymentMethod || "",
+      paymentHeldFor: b.paymentHeldFor || "",
       address: b.address || "",
       createdAt: b.createdAt.toISOString().slice(0, 19).replace("T", " "),
     });

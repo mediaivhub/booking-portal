@@ -15,6 +15,7 @@ interface BookingEmailData {
   timeSlot?: string | null;
   bookingDate?: Date | string | null;
   paymentMethod?: string | null;
+  paymentHeldFor?: string | null;
   createdBy?: string | null;
   client: { name: string; phone?: string | null; email?: string | null };
   nurse: { name: string };
@@ -54,6 +55,7 @@ function buildBookingTable(booking: BookingEmailData) {
       ${row("Time Slot", booking.timeSlot)}
       ${row("Address", booking.address)}
       ${row("Payment Method", booking.paymentMethod)}
+      ${booking.paymentHeldFor ? row("Payment Held For", booking.paymentHeldFor) : ""}
       ${row("Description", booking.description)}
       ${row("Assigned Nurse", booking.nurse.name)}
       ${row("Created By", booking.createdBy)}

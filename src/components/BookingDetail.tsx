@@ -70,6 +70,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       timeSlot: parseTime12(booking!.timeSlot || ""),
       bookingDate: booking!.bookingDate ? booking!.bookingDate.split("T")[0] : "",
       paymentMethod: booking!.paymentMethod || PAYMENT_METHODS[0],
+      paymentHeldFor: booking!.paymentHeldFor || "",
       orderId: booking!.orderId || "",
     });
     setDripLines((booking!.drips ?? []).map((d) => ({
@@ -214,6 +215,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             <DetailRow label="Job ID" value={booking.jobId} />
             <DetailRow label="Service" value={booking.service} />
             <DetailRow label="Payment" value={booking.paymentMethod} />
+            {booking.paymentHeldFor && <DetailRow label="Payment Held For" value={booking.paymentHeldFor} />}
 
             <div className="py-3.5" style={{ borderTop: "1px solid var(--border)" }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Drip &amp; Vial Tracking</p>
@@ -278,6 +280,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             </div>
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
             <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
+            <EditField label="Payment Held For (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
             <DripVialSection nurseId={booking.nurse?.id ?? null} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
             <div className="flex gap-2 pt-2">
               <button

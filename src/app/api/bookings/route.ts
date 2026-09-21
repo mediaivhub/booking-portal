@@ -188,6 +188,7 @@ export async function POST(req: NextRequest) {
       timeSlot: body.timeSlot || null,
       bookingDate: body.bookingDate ? new Date(body.bookingDate) : null,
       paymentMethod: body.paymentMethod || null,
+      paymentHeldFor: typeof body.paymentHeldFor === "string" && body.paymentHeldFor.trim() ? body.paymentHeldFor.trim() : null,
     },
     include: {
       client: true,

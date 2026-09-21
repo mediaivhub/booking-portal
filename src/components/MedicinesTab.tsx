@@ -6,6 +6,7 @@ import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
 import { INVENTORY_UNITS } from "@/lib/constants";
+import ConfirmModal from "@/components/ConfirmModal";
 import { inputStyle, Field, StatCard, fmt } from "@/components/inventory-ui";
 
 interface Medicine {
@@ -26,6 +27,8 @@ export default function MedicinesTab() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Medicine | null>(null);
+  const [toDelete, setToDelete] = useState<Medicine | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [today] = useState(() => new Date().toISOString().slice(0, 10));
 
   const load = useCallback(() => {
@@ -47,13 +50,18 @@ export default function MedicinesTab() {
   // Stat totals only make sense in one unit; the app's default is ml.
   const unit = items.length && items.every((m) => m.unit === items[0].unit) ? items[0].unit : "ml";
 
-  async function remove(m: Medicine) {
-    if (!confirm(`Remove ${m.name} from bulk inventory?`)) return;
+  async function remove() {
+    if (!toDelete) return;
+    setDeleting(true);
     try {
-      await api.medicines.remove(m.id);
+      await api.medicines.remove(toDelete.id);
+      toast("Medicine deleted");
+      setToDelete(null);
       load();
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Failed to remove");
+      toast(e instanceof Error ? e.message : "Failed to delete");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -115,9 +123,18 @@ export default function MedicinesTab() {
                       Bulk · No Serial · {expired ? "Expired" : "Exp"}: {m.expiry ?? "—"}
                     </p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: badge.bg, color: badge.color }}>
-                    {badge.label}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: badge.bg, color: badge.color }}>
+                      {badge.label}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setToDelete(m); }}
+                      className="text-[11px] font-semibold"
+                      style={{ color: "#c62828" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-2 w-full h-2 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
@@ -143,7 +160,6 @@ export default function MedicinesTab() {
                 {expanded === m.id && (
                   <div className="mt-3 pt-3 border-t flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
                     <button onClick={() => setEditing(m)} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>Edit medicine details</button>
-                    <button onClick={() => remove(m)} className="text-[12px] font-semibold" style={{ color: "#c62828" }}>Remove medicine</button>
                   </div>
                 )}
               </div>
@@ -153,6 +169,15 @@ export default function MedicinesTab() {
       )}
 
       {showAdd && <MedicineFormModal onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {toDelete && (
+        <ConfirmModal
+          title="Delete medicine?"
+          message={`${toDelete.name} will be removed from bulk inventory. This can't be undone.`}
+          onConfirm={remove}
+          onClose={() => !deleting && setToDelete(null)}
+          loading={deleting}
+        />
+      )}
       {editing && <MedicineFormModal medicine={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </div>
   );
