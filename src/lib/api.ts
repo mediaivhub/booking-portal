@@ -68,10 +68,11 @@ export const api = {
   },
 
   inventory: {
-    list: (nurseId?: number, excludeBooking?: number) => {
+    list: (nurseId?: number, excludeBooking?: number, location?: string) => {
       const qs = new URLSearchParams();
       if (nurseId) qs.set("nurseId", String(nurseId));
       if (excludeBooking) qs.set("excludeBooking", String(excludeBooking));
+      if (location) qs.set("location", location);
       return request(`/inventory${qs.size ? `?${qs}` : ""}`);
     },
     create: (data: Record<string, unknown>) =>

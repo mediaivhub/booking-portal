@@ -2,14 +2,50 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { vialUsage, vialUsages } from "@/lib/booking-vials";
+import { LOCATION_BASED_STOCK } from "@/lib/constants";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Admins can ask for one nurse's stock (used by the booking form).
+  // Admins can ask for one nurse's stock, or — for a location whose stock isn't carried by a
+  // specific nurse (e.g. the DIFC lounge) — the unassigned stock physically sitting there.
   const forNurse = req.nextUrl.searchParams.get("nurseId");
+  const forLocation = req.nextUrl.searchParams.get("location");
+  const exclude = Number(req.nextUrl.searchParams.get("excludeBooking")) || undefined;
+
+  if (session.user.role === "admin" && forLocation === LOCATION_BASED_STOCK && !forNurse) {
+    const items = await prisma.inventoryItem.findMany({
+      where: { isActive: true, location: forLocation, assignments: { none: {} } },
+      orderBy: { name: "asc" },
+    });
+    const ids = items.map((i) => i.id);
+    const [usage, usages] = await Promise.all([vialUsage(ids, exclude), vialUsages(ids)]);
+    return Response.json(
+      items.map((i) => {
+        const total = Number(i.qty);
+        const left = Math.max(0, round2(total - (usage.all.get(i.id) ?? 0)));
+        return {
+          id: i.id,
+          name: i.name,
+          serial: i.serial,
+          unit: i.unit,
+          expiry: i.expiry ? i.expiry.toISOString().slice(0, 10) : null,
+          createdAt: i.createdAt.toISOString(),
+          location: i.location,
+          qty: total,
+          assigned: 0,
+          assignments: [],
+          total,
+          usages: usages.get(i.id) ?? [],
+          pool: left,
+          left,
+        };
+      })
+    );
+  }
+
   if (session.user.role === "admin" && !forNurse) {
     const items = await prisma.inventoryItem.findMany({
       where: { isActive: true },
@@ -47,7 +83,6 @@ export async function GET(req: NextRequest) {
   // Nurses only see the stock assigned to them.
   const isAdminLookup = session.user.role === "admin";
   const nurseId = forNurse ? Number(forNurse) : Number(session.user.id);
-  const exclude = Number(req.nextUrl.searchParams.get("excludeBooking")) || undefined;
   const mine = await prisma.inventoryAssignment.findMany({
     where: { nurseId, item: { isActive: true } },
     include: { item: true },

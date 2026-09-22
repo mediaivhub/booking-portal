@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { NSS_OPTIONS } from "@/lib/constants";
+import { NSS_OPTIONS, LOCATION_BASED_STOCK } from "@/lib/constants";
 import Select from "./Select";
 
 export interface VialRow {
@@ -33,6 +33,7 @@ interface BulkMed {
   used: number;
   pool: number;
   left: number;
+  locations: { location: string; qty: number }[];
 }
 
 interface NurseVial {
@@ -56,36 +57,42 @@ const KIND_BADGE = {
 const fieldStyle = { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" };
 const fieldClass = "px-3 py-2.5 rounded-xl border outline-none text-sm";
 
-// Drip & vial tracking for a booking. Vials on offer are only the ones assigned to the booking's nurse.
+// Drip & vial tracking for a booking. Vials on offer are normally only the ones assigned to the
+// booking's nurse — except at a location whose stock isn't carried by a nurse (LOCATION_BASED_STOCK,
+// e.g. the DIFC lounge), where they're instead whatever's unassigned and sitting at that location.
 export default function DripVialSection({
   nurseId,
+  location,
   excludeBookingId,
   drips,
   onChange,
 }: {
   nurseId: number | null;
+  location?: string | null;
   /** When editing a booking, its own saved drips aren't counted as already used. */
   excludeBookingId?: number;
   drips: DripLine[];
   onChange: (drips: DripLine[]) => void;
 }) {
-  const [loaded, setLoaded] = useState<{ nurseId: number; vials: NurseVial[] } | null>(null);
+  const byLocation = location === LOCATION_BASED_STOCK;
+  const activeKey = byLocation ? `loc:${location}` : nurseId ? `nurse:${nurseId}` : null;
+  const [loaded, setLoaded] = useState<{ key: string; vials: NurseVial[] } | null>(null);
   const [meds, setMeds] = useState<BulkMed[]>([]);
-  const isCurrent = !!nurseId && loaded?.nurseId === nurseId;
+  const isCurrent = !!activeKey && loaded?.key === activeKey;
   const vials = isCurrent ? loaded!.vials : [];
-  const loading = !!nurseId && !isCurrent;
+  const loading = !!activeKey && !isCurrent;
 
   useEffect(() => {
-    if (!nurseId) return;
+    if (!activeKey) return;
     let cancelled = false;
-    api.inventory
-      .list(nurseId, excludeBookingId)
-      .then((v) => !cancelled && setLoaded({ nurseId, vials: v }))
-      .catch(() => !cancelled && setLoaded({ nurseId, vials: [] }));
+    const req = byLocation ? api.inventory.list(undefined, excludeBookingId, location!) : api.inventory.list(nurseId!, excludeBookingId);
+    req
+      .then((v) => !cancelled && setLoaded({ key: activeKey, vials: v }))
+      .catch(() => !cancelled && setLoaded({ key: activeKey, vials: [] }));
     return () => {
       cancelled = true;
     };
-  }, [nurseId, excludeBookingId]);
+  }, [activeKey, byLocation, location, nurseId, excludeBookingId]);
 
   // Bulk medicines: shared office stock, unless a medicine has been split out to specific nurses,
   // in which case only the nurses it's assigned to can use it (same rule as vials).
@@ -103,6 +110,10 @@ export default function DripVialSection({
       cancelled = true;
     };
   }, [nurseId, excludeBookingId]);
+
+  // In location mode, only offer medicines that were actually split to this location — the shared/
+  // unassigned pool otherwise shows regardless of where it's sitting.
+  const visibleMeds = byLocation ? meds.filter((m) => m.locations.some((l) => l.location === location)) : meds;
 
   const add = (kind: DripLine["kind"]) => onChange([...drips, { kind, dripName: "", nss: "", nssQty: "1", vials: [{ itemId: "", qty: "1" }], medicines: [] }]);
   const patch = (i: number, p: Partial<DripLine>) => onChange(drips.map((d, idx) => (idx === i ? { ...d, ...p } : d)));
@@ -125,7 +136,7 @@ export default function DripVialSection({
   // Bulk stock left for row (i, j): the smaller of office-wide stock and this nurse's own assigned share
   // (if the medicine was split to specific nurses), minus other rows in this form.
   const medLeft = (medicineId: string, i: number, j: number) => {
-    const m = meds.find((x) => String(x.id) === medicineId);
+    const m = visibleMeds.find((x) => String(x.id) === medicineId);
     if (!m) return 0;
     const held = Math.min(m.pool, m.left);
     const elsewhere = drips.reduce(
@@ -136,7 +147,7 @@ export default function DripVialSection({
   };
   const medOptions = (i: number, j: number) => [
     { label: "Select medicine...", value: "" },
-    ...meds
+    ...visibleMeds
       .filter((m) => medLeft(String(m.id), i, j) > 0 || String(m.id) === drips[i].medicines[j].medicineId)
       .map((m) => ({ label: `${m.name} · Exp: ${m.expiry ?? "—"} · [${Math.min(m.pool, m.left)} of ${m.qty} ${m.unit} avl]`, value: String(m.id) })),
   ];
@@ -306,7 +317,9 @@ export default function DripVialSection({
                 })}
                 {loading && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Loading vials...</p>}
                 {!loading && vials.length === 0 && (
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No vials are assigned to this nurse</p>
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+                    {byLocation ? `No unassigned vials at ${location}` : "No vials are assigned to this nurse"}
+                  </p>
                 )}
                 <button
                   type="button"
@@ -363,16 +376,20 @@ export default function DripVialSection({
                       </div>
                       {over && (
                         <p className="text-[12px] font-semibold px-1" style={{ color: "#c62828" }}>
-                          Only {max} {meds.find((x) => String(x.id) === m.medicineId)?.unit ?? ""} available
+                          Only {max} {visibleMeds.find((x) => String(x.id) === m.medicineId)?.unit ?? ""} available
                         </p>
                       )}
                     </div>
                   );
                 })}
-                {meds.length === 0 && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>No bulk medicines in inventory</p>}
+                {visibleMeds.length === 0 && (
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
+                    {byLocation ? `No bulk medicines at ${location}` : "No bulk medicines in inventory"}
+                  </p>
+                )}
                 <button
                   type="button"
-                  disabled={meds.length === 0}
+                  disabled={visibleMeds.length === 0}
                   onClick={() => patch(i, { medicines: [...d.medicines, { medicineId: "", qty: "1" }] })}
                   className="text-[13px] font-semibold disabled:opacity-40"
                   style={{ color: "var(--primary-text)" }}

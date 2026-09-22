@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { LOCATION_BASED_STOCK } from "@/lib/constants";
 
 export interface DripInput {
   kind: "cs_drip" | "upsell";
@@ -119,7 +120,8 @@ export async function medicineUsages(medicineIds: number[]) {
 export async function validateDrips(
   raw: unknown,
   nurseId: number | null,
-  excludeBookingId?: number
+  excludeBookingId?: number,
+  location?: string | null
 ): Promise<{ drips: DripInput[] } | { error: string }> {
   if (!Array.isArray(raw) || raw.length === 0) return { drips: [] };
   if (!nurseId) return { error: "Assign a nurse before adding drips" };
@@ -156,19 +158,38 @@ export async function validateDrips(
   for (const d of drips) for (const v of d.vials) totals.set(v.itemId, (totals.get(v.itemId) ?? 0) + v.qty);
 
   if (totals.size) {
-    const assignments = await prisma.inventoryAssignment.findMany({
-      where: { nurseId, itemId: { in: [...totals.keys()] }, item: { isActive: true } },
-      include: { item: { select: { name: true, qty: true } } },
-    });
-    const held = new Map(assignments.map((a) => [a.itemId, a]));
-    const usage = await vialUsage([...totals.keys()], excludeBookingId);
-    for (const [itemId, total] of totals) {
-      const a = held.get(itemId);
-      if (!a) return { error: "That vial is not assigned to this nurse" };
-      const nurseLeft = Number(a.qty) - (usage.byNurse.get(`${itemId}:${nurseId}`) ?? 0);
-      if (total > nurseLeft) return { error: `${a.item.name}: only ${Math.max(0, nurseLeft)} left with this nurse` };
-      const poolLeft = Number(a.item.qty) - (usage.all.get(itemId) ?? 0);
-      if (total > poolLeft) return { error: `${a.item.name}: only ${Math.max(0, poolLeft)} left in stock` };
+    if (location === LOCATION_BASED_STOCK) {
+      // This location's vials come from whatever's unassigned and sitting there, not a nurse's
+      // own carried stock — e.g. the DIFC lounge, where any nurse on shift can use house stock.
+      const items = await prisma.inventoryItem.findMany({
+        where: { id: { in: [...totals.keys()] }, isActive: true },
+        include: { assignments: { select: { id: true } } },
+      });
+      const byId = new Map(items.map((i) => [i.id, i]));
+      const usage = await vialUsage([...totals.keys()], excludeBookingId);
+      for (const [itemId, total] of totals) {
+        const item = byId.get(itemId);
+        if (!item) return { error: "Vial not found" };
+        if (item.assignments.length > 0) return { error: `${item.name}: already assigned to a nurse` };
+        if (item.location !== location) return { error: `${item.name}: not at ${location}` };
+        const poolLeft = Number(item.qty) - (usage.all.get(itemId) ?? 0);
+        if (total > poolLeft) return { error: `${item.name}: only ${Math.max(0, poolLeft)} left in stock` };
+      }
+    } else {
+      const assignments = await prisma.inventoryAssignment.findMany({
+        where: { nurseId, itemId: { in: [...totals.keys()] }, item: { isActive: true } },
+        include: { item: { select: { name: true, qty: true } } },
+      });
+      const held = new Map(assignments.map((a) => [a.itemId, a]));
+      const usage = await vialUsage([...totals.keys()], excludeBookingId);
+      for (const [itemId, total] of totals) {
+        const a = held.get(itemId);
+        if (!a) return { error: "That vial is not assigned to this nurse" };
+        const nurseLeft = Number(a.qty) - (usage.byNurse.get(`${itemId}:${nurseId}`) ?? 0);
+        if (total > nurseLeft) return { error: `${a.item.name}: only ${Math.max(0, nurseLeft)} left with this nurse` };
+        const poolLeft = Number(a.item.qty) - (usage.all.get(itemId) ?? 0);
+        if (total > poolLeft) return { error: `${a.item.name}: only ${Math.max(0, poolLeft)} left in stock` };
+      }
     }
   }
   const medTotals = new Map<number, number>();

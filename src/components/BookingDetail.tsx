@@ -12,7 +12,7 @@ import DripVialSection, { DripLine, toPayload } from "./DripVialSection";
 import ConfirmModal from "./ConfirmModal";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
-import { SERVICES, PAYMENT_METHODS } from "@/lib/constants";
+import { SERVICES, PAYMENT_METHODS, INVENTORY_LOCATIONS } from "@/lib/constants";
 import { formatTime12, parseTime12 } from "@/lib/time";
 import type { BookingData } from "./BookingCard";
 
@@ -75,6 +75,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
       paymentMethod: booking!.paymentMethod || PAYMENT_METHODS[0],
       paymentHeldFor: booking!.paymentHeldFor || "",
       orderId: booking!.orderId || "",
+      location: booking!.location || "",
     });
     setDripLines((booking!.drips ?? []).map((d) => ({
       kind: d.kind,
@@ -219,6 +220,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             <DetailRow label="Service" value={booking.service} />
             <DetailRow label="Payment" value={booking.paymentMethod} />
             {booking.paymentHeldFor && <DetailRow label="Payment to Collect" value={booking.paymentHeldFor} />}
+            {booking.location && <DetailRow label="Location" value={booking.location} />}
 
             <div className="py-3.5" style={{ borderTop: "1px solid var(--border)" }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-3)" }}>Drip &amp; Vial Tracking</p>
@@ -284,8 +286,18 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
             <EditField label="Address" value={editData.address} onChange={(v) => setEditData({ ...editData, address: v })} />
             <EditField label="Description" value={editData.description} onChange={(v) => setEditData({ ...editData, description: v })} multiline />
             <EditSelectField label="Payment Method" value={editData.paymentMethod} onChange={(v) => setEditData({ ...editData, paymentMethod: v })} options={PAYMENT_METHODS} />
-            <EditField label="Payment to Collect (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
-            <DripVialSection nurseId={booking.nurse?.id ?? null} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
+            <div className="grid grid-cols-2 gap-2">
+              <EditField label="Payment to Collect (optional)" value={editData.paymentHeldFor} onChange={(v) => setEditData({ ...editData, paymentHeldFor: v })} />
+              {/* INVENTORY_LOCATIONS is the single source of truth for locations across the app (src/lib/constants.ts). */}
+              <EditSelectField
+                label="Location"
+                value={editData.location}
+                onChange={(v) => setEditData({ ...editData, location: v })}
+                options={["— Not set —", ...INVENTORY_LOCATIONS]}
+                optionValues={["", ...INVENTORY_LOCATIONS]}
+              />
+            </div>
+            <DripVialSection nurseId={booking.nurse?.id ?? null} location={editData.location} excludeBookingId={booking.id} drips={dripLines} onChange={setDripLines} />
             <div className="flex gap-2 pt-2">
               <button
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-white"
@@ -535,7 +547,7 @@ function EditField({
   );
 }
 
-function EditSelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+function EditSelectField({ label, value, onChange, options, optionValues }: { label: string; value: string; onChange: (v: string) => void; options: string[]; optionValues?: string[] }) {
   return (
     <div>
       <label className="block text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: "var(--text-3)" }}>
@@ -544,7 +556,7 @@ function EditSelectField({ label, value, onChange, options }: { label: string; v
       <Select
         value={value}
         onChange={onChange}
-        options={options.map((opt) => ({ label: opt, value: opt }))}
+        options={options.map((opt, i) => ({ label: opt, value: optionValues ? optionValues[i] : opt }))}
         className="w-full px-3 py-2 rounded-xl border outline-none text-sm"
         style={{ background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" }}
       />

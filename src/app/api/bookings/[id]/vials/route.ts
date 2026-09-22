@@ -22,7 +22,7 @@ export async function PUT(
   }
 
   const { drips } = await req.json();
-  const checked = await validateDrips(drips, booking.nurseId, id);
+  const checked = await validateDrips(drips, booking.nurseId, id, booking.location);
   if ("error" in checked) return Response.json({ error: checked.error }, { status: 400 });
 
   await prisma.$transaction([

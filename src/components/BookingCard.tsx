@@ -15,6 +15,7 @@ export interface BookingData {
   bookingDate?: string;
   paymentMethod?: string;
   paymentHeldFor?: string | null;
+  location?: string | null;
   trackingLink?: string;
   createdAt?: string;
   updatedAt?: string;

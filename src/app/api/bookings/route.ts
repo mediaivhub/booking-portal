@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  const checked = await validateDrips(body.drips, body.nurseId ? Number(body.nurseId) : null);
+  const checked = await validateDrips(body.drips, body.nurseId ? Number(body.nurseId) : null, undefined, body.location || null);
   if ("error" in checked) return Response.json({ error: checked.error }, { status: 400 });
 
   let client = await prisma.client.findFirst({
@@ -189,6 +189,7 @@ export async function POST(req: NextRequest) {
       bookingDate: body.bookingDate ? new Date(body.bookingDate) : null,
       paymentMethod: body.paymentMethod || null,
       paymentHeldFor: typeof body.paymentHeldFor === "string" && body.paymentHeldFor.trim() ? body.paymentHeldFor.trim() : null,
+      location: body.location || null,
     },
     include: {
       client: true,

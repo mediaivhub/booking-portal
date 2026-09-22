@@ -55,6 +55,7 @@ model Booking {
   bookingDate    DateTime?     @map("booking_date") @db.Date
   paymentMethod  String?       @map("payment_method") @db.VarChar(50)
   paymentHeldFor String?       @map("payment_held_for") @db.VarChar(150)
+  location       String?       @db.VarChar(100)
   trackingLink   String?       @map("tracking_link") @db.VarChar(500)
   distance       Decimal?      @db.Decimal(5, 2)
   timeTaken      Decimal?      @map("time_taken") @db.Decimal(5, 2)
