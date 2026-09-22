@@ -238,12 +238,15 @@ export default function MedicinesTab() {
                         {m.locations.map((l) => `${l.location} (${fmt(l.qty)})`).join(", ")}
                       </p>
                     )}
-                    {m.assignments.length > 0 && (
-                      <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                        <span className="font-semibold" style={{ color: "var(--accent)" }}>Assigned: </span>
-                        {m.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ")}
-                      </p>
-                    )}
+                    <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                      <span className="font-semibold" style={{ color: "var(--accent)" }}>Assigned: </span>
+                      {m.assignments.length > 0
+                        ? m.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ")
+                        // Not held by a nurse — it's sitting at its location(s) instead, so show that rather than nothing.
+                        : m.locations.length > 0
+                          ? m.locations.map((l) => l.location).join(", ")
+                          : "Unassigned"}
+                    </p>
                     <div className="flex items-center gap-4">
                       <button onClick={() => setEditing(m)} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>Edit medicine details</button>
                     </div>
