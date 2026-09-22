@@ -112,6 +112,16 @@ export default function BookingCard({
             <span>Order ID: {booking.orderId}</span>
           </div>
         )}
+
+        {booking.paymentHeldFor && (
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <span>Payment to Collect: {booking.paymentHeldFor}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between mt-3 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
