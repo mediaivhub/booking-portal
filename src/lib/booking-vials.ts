@@ -58,11 +58,17 @@ export async function medicineUsage(medicineIds: number[], excludeBookingId?: nu
       medicineId: { in: medicineIds },
       drip: { booking: { status: "completed", ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}) } },
     },
-    select: { medicineId: true, qty: true },
+    select: { medicineId: true, qty: true, drip: { select: { booking: { select: { nurseId: true } } } } },
   });
   const all = new Map<number, number>();
-  for (const r of rows) all.set(r.medicineId, (all.get(r.medicineId) ?? 0) + Number(r.qty));
-  return all;
+  const byNurse = new Map<string, number>();
+  for (const r of rows) {
+    const q = Number(r.qty);
+    all.set(r.medicineId, (all.get(r.medicineId) ?? 0) + q);
+    const key = `${r.medicineId}:${r.drip.booking.nurseId}`;
+    byNurse.set(key, (byNurse.get(key) ?? 0) + q);
+  }
+  return { all, byNurse };
 }
 
 export async function medicineUsages(medicineIds: number[]) {
@@ -145,12 +151,23 @@ export async function validateDrips(
   if (medTotals.size) {
     const meds = await prisma.bulkMedicine.findMany({ where: { id: { in: [...medTotals.keys()] }, isActive: true } });
     const byId = new Map(meds.map((m) => [m.id, m]));
+    // Only medicines split out to nurses are nurse-restricted; ones never assigned stay shared office stock.
+    const assignments = await prisma.bulkMedicineAssignment.findMany({ where: { medicineId: { in: [...medTotals.keys()] } } });
+    const assignedByMedicine = new Map<number, typeof assignments>();
+    for (const a of assignments) assignedByMedicine.set(a.medicineId, [...(assignedByMedicine.get(a.medicineId) ?? []), a]);
     const used = await medicineUsage([...medTotals.keys()], excludeBookingId);
     for (const [id, total] of medTotals) {
       const m = byId.get(id);
       if (!m) return { error: "Medicine not found" };
-      const left = Number(m.qty) - (used.get(id) ?? 0);
-      if (total > left) return { error: `${m.name}: only ${Math.max(0, left)} left in bulk stock` };
+      const poolLeft = Number(m.qty) - (used.all.get(id) ?? 0);
+      if (total > poolLeft) return { error: `${m.name}: only ${Math.max(0, poolLeft)} left in bulk stock` };
+      const forMedicine = assignedByMedicine.get(id) ?? [];
+      if (forMedicine.length > 0) {
+        const mine = forMedicine.find((a) => a.nurseId === nurseId);
+        if (!mine) return { error: `${m.name} is not assigned to this nurse` };
+        const nurseLeft = Number(mine.qty) - (used.byNurse.get(`${id}:${nurseId}`) ?? 0);
+        if (total > nurseLeft) return { error: `${m.name}: only ${Math.max(0, nurseLeft)} left assigned to this nurse` };
+      }
     }
   }
 

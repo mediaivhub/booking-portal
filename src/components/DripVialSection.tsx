@@ -31,6 +31,8 @@ interface BulkMed {
   expiry: string | null;
   qty: number;
   used: number;
+  pool: number;
+  left: number;
 }
 
 interface NurseVial {
@@ -85,17 +87,22 @@ export default function DripVialSection({
     };
   }, [nurseId, excludeBookingId]);
 
-  // Bulk medicines are office stock, not tied to a nurse.
+  // Bulk medicines: shared office stock, unless a medicine has been split out to specific nurses,
+  // in which case only the nurses it's assigned to can use it (same rule as vials).
   useEffect(() => {
+    if (!nurseId) {
+      setMeds([]);
+      return;
+    }
     let cancelled = false;
     api.medicines
-      .list(excludeBookingId)
+      .list(nurseId, excludeBookingId)
       .then((m) => !cancelled && setMeds(m))
       .catch(() => !cancelled && setMeds([]));
     return () => {
       cancelled = true;
     };
-  }, [excludeBookingId]);
+  }, [nurseId, excludeBookingId]);
 
   const add = (kind: DripLine["kind"]) => onChange([...drips, { kind, dripName: "", nss: "", nssQty: "1", vials: [{ itemId: "", qty: "1" }], medicines: [] }]);
   const patch = (i: number, p: Partial<DripLine>) => onChange(drips.map((d, idx) => (idx === i ? { ...d, ...p } : d)));
@@ -115,24 +122,24 @@ export default function DripVialSection({
   const vialLabel = (v: NurseVial) => `${v.name} · ${v.serial} · Exp: ${v.expiry ?? "—"} · [${v.pool} of ${v.total} ${v.unit} avl]`;
   const patchMed = (i: number, j: number, p: Partial<MedRow>) =>
     patch(i, { medicines: drips[i].medicines.map((m, idx) => (idx === j ? { ...m, ...p } : m)) });
-  // Bulk stock left for row (i, j): stock minus completed use, minus other rows in this form.
+  // Bulk stock left for row (i, j): the smaller of office-wide stock and this nurse's own assigned share
+  // (if the medicine was split to specific nurses), minus other rows in this form.
   const medLeft = (medicineId: string, i: number, j: number) => {
     const m = meds.find((x) => String(x.id) === medicineId);
     if (!m) return 0;
+    const held = Math.min(m.pool, m.left);
     const elsewhere = drips.reduce(
       (sum, d, di) => sum + d.medicines.reduce((s2, r, ri) => s2 + (r.medicineId === medicineId && !(di === i && ri === j) ? Number(r.qty) || 0 : 0), 0),
       0
     );
-    return Math.max(0, Math.round((m.qty - m.used - elsewhere) * 100) / 100);
+    return Math.max(0, Math.round((held - elsewhere) * 100) / 100);
   };
   const medOptions = (i: number, j: number) => [
     { label: "Select medicine...", value: "" },
     ...meds
       .filter((m) => medLeft(String(m.id), i, j) > 0 || String(m.id) === drips[i].medicines[j].medicineId)
-      .map((m) => ({ label: `${m.name} · Exp: ${m.expiry ?? "—"} · [${Math.max(0, m.qty - m.used)} of ${m.qty} ${m.unit} avl]`, value: String(m.id) })),
+      .map((m) => ({ label: `${m.name} · Exp: ${m.expiry ?? "—"} · [${Math.min(m.pool, m.left)} of ${m.qty} ${m.unit} avl]`, value: String(m.id) })),
   ];
-  const clamp = (qty: string, max: number) => (qty !== "" && Number(qty) > max ? String(max) : qty);
-
   const vialOptions = (i: number, j: number) => [
     { label: "Select vial...", value: "" },
     ...vials
@@ -233,6 +240,7 @@ export default function DripVialSection({
               <div className="space-y-2">
                 {d.vials.map((v, j) => {
                   const max = v.itemId ? remaining(v.itemId, i, j) : 0;
+                  const over = !!v.itemId && v.qty !== "" && Number(v.qty) > max;
                   return (
                     <div key={j} className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -250,13 +258,12 @@ export default function DripVialSection({
                         <input
                           type="number"
                           min="0"
-                          max={v.itemId ? max : undefined}
                           step="0.5"
                           disabled={!v.itemId}
                           value={v.qty}
-                          onChange={(e) => patchVial(i, j, { qty: v.itemId ? clamp(e.target.value, max) : e.target.value })}
+                          onChange={(e) => patchVial(i, j, { qty: e.target.value })}
                           className={`w-20 shrink-0 text-center disabled:opacity-50 ${fieldClass}`}
-                          style={fieldStyle}
+                          style={over ? { ...fieldStyle, borderColor: "#c62828" } : fieldStyle}
                         />
                         <button
                           type="button"
@@ -268,6 +275,11 @@ export default function DripVialSection({
                           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                         </button>
                       </div>
+                      {over && (
+                        <p className="text-[12px] font-semibold px-1" style={{ color: "#c62828" }}>
+                          Only {max} {vials.find((x) => String(x.id) === v.itemId)?.unit ?? ""} available
+                        </p>
+                      )}
                       {v.itemId && (() => {
                         const info = vials.find((x) => String(x.id) === v.itemId);
                         if (!info) return null;
@@ -317,36 +329,43 @@ export default function DripVialSection({
               <div className="space-y-2">
                 {d.medicines.map((m, j) => {
                   const max = m.medicineId ? medLeft(m.medicineId, i, j) : 0;
+                  const over = !!m.medicineId && m.qty !== "" && Number(m.qty) > max;
                   return (
-                    <div key={j} className="flex items-center gap-2">
-                      <Select
-                        value={m.medicineId}
-                        onChange={(val) => patchMed(i, j, { medicineId: val, qty: val ? String(Math.min(1, medLeft(val, i, j))) : m.qty })}
-                        options={medOptions(i, j)}
-                        wide
-                        className={fieldClass}
-                        style={fieldStyle}
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        max={m.medicineId ? max : undefined}
-                        step="0.5"
-                        disabled={!m.medicineId}
-                        value={m.qty}
-                        onChange={(e) => patchMed(i, j, { qty: m.medicineId && e.target.value !== "" && Number(e.target.value) > max ? String(max) : e.target.value })}
-                        className={`w-20 shrink-0 text-center disabled:opacity-50 ${fieldClass}`}
-                        style={fieldStyle}
-                      />
-                      <button
-                        type="button"
-                        aria-label="Remove medicine"
-                        onClick={() => patch(i, { medicines: d.medicines.filter((_, idx) => idx !== j) })}
-                        className="shrink-0 p-1"
-                        style={{ color: "#e05a44" }}
-                      >
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                      </button>
+                    <div key={j}>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={m.medicineId}
+                          onChange={(val) => patchMed(i, j, { medicineId: val, qty: val ? String(Math.min(1, medLeft(val, i, j))) : m.qty })}
+                          options={medOptions(i, j)}
+                          wide
+                          className={fieldClass}
+                          style={fieldStyle}
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          disabled={!m.medicineId}
+                          value={m.qty}
+                          onChange={(e) => patchMed(i, j, { qty: e.target.value })}
+                          className={`w-20 shrink-0 text-center disabled:opacity-50 ${fieldClass}`}
+                          style={over ? { ...fieldStyle, borderColor: "#c62828" } : fieldStyle}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Remove medicine"
+                          onClick={() => patch(i, { medicines: d.medicines.filter((_, idx) => idx !== j) })}
+                          className="shrink-0 p-1"
+                          style={{ color: "#e05a44" }}
+                        >
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                      {over && (
+                        <p className="text-[12px] font-semibold px-1" style={{ color: "#c62828" }}>
+                          Only {max} {meds.find((x) => String(x.id) === m.medicineId)?.unit ?? ""} available
+                        </p>
+                      )}
                     </div>
                   );
                 })}

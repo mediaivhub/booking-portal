@@ -23,3 +23,32 @@ export function StatCard({ label, value, color }: { label: string; value: string
 export function fmt(n: number) {
   return String(Math.round(n * 100) / 100);
 }
+
+// A "<label> ... [qty input]" row used to split a quantity across locations or nurses.
+// `max` is advisory only: entry isn't blocked, but a row over its share is flagged in red.
+export function SplitRow({ label, value, max, onChange }: { label: string; value: string; max?: number; onChange: (v: string) => void }) {
+  const over = max !== undefined && value !== "" && Number(value) > max;
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[14px]" style={{ color: "var(--text-1)" }}>{label}</span>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="0"
+            className="w-28 px-3 py-1.5 rounded-lg border outline-none text-sm text-right"
+            style={over ? { ...inputStyle, borderColor: "#c62828" } : inputStyle}
+          />
+          <span className="text-[11px]" style={{ color: "var(--text-3)" }}>qty</span>
+        </div>
+      </div>
+      {over && (
+        <p className="text-[11px] text-right mt-0.5" style={{ color: "#c62828" }}>Only {max} available</p>
+      )}
+    </div>
+  );
+}

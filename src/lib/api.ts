@@ -84,7 +84,12 @@ export const api = {
   },
 
   medicines: {
-    list: (excludeBooking?: number) => request(`/medicines${excludeBooking ? `?excludeBooking=${excludeBooking}` : ""}`),
+    list: (nurseId?: number, excludeBooking?: number) => {
+      const qs = new URLSearchParams();
+      if (nurseId) qs.set("nurseId", String(nurseId));
+      if (excludeBooking) qs.set("excludeBooking", String(excludeBooking));
+      return request(`/medicines${qs.size ? `?${qs}` : ""}`);
+    },
     create: (data: Record<string, unknown>) =>
       request("/medicines", { method: "POST", body: JSON.stringify(data) }),
     update: (id: number, data: Record<string, unknown>) =>

@@ -5,9 +5,20 @@ import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
-import { INVENTORY_UNITS } from "@/lib/constants";
+import { INVENTORY_UNITS, INVENTORY_LOCATIONS } from "@/lib/constants";
 import ConfirmModal from "@/components/ConfirmModal";
-import { inputStyle, Field, StatCard, fmt } from "@/components/inventory-ui";
+import { inputStyle, Field, StatCard, fmt, SplitRow } from "@/components/inventory-ui";
+
+interface MedicineAssignment {
+  nurseId: number;
+  nurseName: string;
+  qty: number;
+}
+
+interface MedicineLocation {
+  location: string;
+  qty: number;
+}
 
 interface Medicine {
   id: number;
@@ -17,11 +28,20 @@ interface Medicine {
   unit: string;
   expiry: string | null;
   usages: { bookingId: number; taskId: string; qty: number; completed: boolean }[];
+  locations: MedicineLocation[];
+  assignments: MedicineAssignment[];
+}
+
+interface NurseOption {
+  id: number;
+  name: string;
+  isActive: boolean;
 }
 
 // Bulk "master" medicines held in the office inventory (admin only).
 export default function MedicinesTab() {
   const [items, setItems] = useState<Medicine[]>([]);
+  const [nurses, setNurses] = useState<NurseOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -41,6 +61,7 @@ export default function MedicinesTab() {
 
   useEffect(() => {
     load();
+    api.nurses.list().then(setNurses).catch(() => {});
   }, [load]);
 
   const q = search.toLowerCase();
@@ -158,8 +179,22 @@ export default function MedicinesTab() {
                 </div>
 
                 {expanded === m.id && (
-                  <div className="mt-3 pt-3 border-t flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
-                    <button onClick={() => setEditing(m)} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>Edit medicine details</button>
+                  <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
+                    {m.locations.length > 0 && (
+                      <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                        <span className="font-semibold" style={{ color: "var(--primary-text)" }}>Locations: </span>
+                        {m.locations.map((l) => `${l.location} (${fmt(l.qty)})`).join(", ")}
+                      </p>
+                    )}
+                    {m.assignments.length > 0 && (
+                      <p className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                        <span className="font-semibold" style={{ color: "var(--accent)" }}>Assigned: </span>
+                        {m.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ")}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <button onClick={() => setEditing(m)} className="text-[12px] font-semibold" style={{ color: "var(--primary-text)" }}>Edit medicine details</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -168,7 +203,7 @@ export default function MedicinesTab() {
         </div>
       )}
 
-      {showAdd && <MedicineFormModal onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {showAdd && <MedicineFormModal nurses={nurses.filter((n) => n.isActive)} onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
       {toDelete && (
         <ConfirmModal
           title="Delete medicine?"
@@ -178,12 +213,19 @@ export default function MedicinesTab() {
           loading={deleting}
         />
       )}
-      {editing && <MedicineFormModal medicine={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {editing && <MedicineFormModal medicine={editing} nurses={[]} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </div>
   );
 }
 
-function MedicineFormModal({ medicine, onClose, onSaved }: { medicine?: Medicine; onClose: () => void; onSaved: () => void }) {
+// How much of the master quantity is still unclaimed once every other location/nurse row is counted —
+// locations and nurses draw from the same pool, so this is checked against their combined total, not per section.
+function remainingFor(rowValue: string, combinedTotal: number, master: number): number {
+  const others = combinedTotal - (Number(rowValue) || 0);
+  return Math.max(0, Math.round((master - others) * 100) / 100);
+}
+
+function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: Medicine; nurses: NurseOption[]; onClose: () => void; onSaved: () => void }) {
   const isEdit = !!medicine;
   const [form, setForm] = useState({
     name: medicine?.name ?? "",
@@ -191,11 +233,19 @@ function MedicineFormModal({ medicine, onClose, onSaved }: { medicine?: Medicine
     unit: medicine?.unit ?? INVENTORY_UNITS[0],
     expiry: medicine?.expiry ?? "",
   });
+  // Split rows only apply when creating a new medicine; keyed by location/nurse id, kept as strings for the inputs.
+  const [locationQty, setLocationQty] = useState<Record<string, string>>({});
+  const [nurseQty, setNurseQty] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
   const unitOptions = Array.from(new Set([...INVENTORY_UNITS, form.unit]));
   const field = "w-full px-4 py-3 rounded-2xl border outline-none text-[15px]";
   const fieldStyle = { background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" };
+  const masterQty = Number(form.qty) || 0;
+  const locationTotal = Object.values(locationQty).reduce((s, v) => s + (Number(v) || 0), 0);
+  const nurseTotal = Object.values(nurseQty).reduce((s, v) => s + (Number(v) || 0), 0);
+  // Locations and nurses aren't separate pools — both draw from the same master quantity.
+  const combinedTotal = locationTotal + nurseTotal;
 
   function close(after: () => void) {
     setClosing(true);
@@ -206,9 +256,14 @@ function MedicineFormModal({ medicine, onClose, onSaved }: { medicine?: Medicine
     e.preventDefault();
     setSaving(true);
     try {
-      const data = { ...form, qty: Number(form.qty), expiry: form.expiry || null };
-      if (medicine) await api.medicines.update(medicine.id, data);
-      else await api.medicines.create(data);
+      const data: Record<string, unknown> = { ...form, qty: Number(form.qty), expiry: form.expiry || null };
+      if (medicine) {
+        await api.medicines.update(medicine.id, data);
+      } else {
+        data.locations = INVENTORY_LOCATIONS.map((location) => ({ location, qty: Number(locationQty[location] || 0) }));
+        data.nurseAssignments = nurses.map((n) => ({ nurseId: n.id, qty: Number(nurseQty[n.id] || 0) }));
+        await api.medicines.create(data);
+      }
       toast(isEdit ? "Medicine updated" : "Medicine added");
       close(onSaved);
     } catch (err) {
@@ -249,6 +304,52 @@ function MedicineFormModal({ medicine, onClose, onSaved }: { medicine?: Medicine
         <Field label="Expiry Date">
           <DatePicker value={form.expiry} onChange={(v) => setForm((f) => ({ ...f, expiry: v }))} className={field} style={fieldStyle} />
         </Field>
+
+        {!isEdit && (
+          <>
+            <div className="pt-1 border-t" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center justify-between mt-4 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>Total Allocated</p>
+                <p className="text-[11px] font-semibold" style={{ color: combinedTotal > masterQty ? "#c62828" : "var(--text-3)" }}>{fmt(combinedTotal)} / {fmt(masterQty)} {form.unit}</p>
+              </div>
+              <p className="text-[12px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: "var(--primary-text)" }}>
+                Split Across Locations
+              </p>
+              <div className="space-y-2.5">
+                {/* INVENTORY_LOCATIONS is the single source of truth for locations across the app (src/lib/constants.ts). */}
+                {INVENTORY_LOCATIONS.map((location) => (
+                  <SplitRow
+                    key={location}
+                    label={location}
+                    value={locationQty[location] ?? ""}
+                    max={remainingFor(locationQty[location] ?? "", combinedTotal, masterQty)}
+                    onChange={(v) => setLocationQty((f) => ({ ...f, [location]: v }))}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {nurses.length > 0 && (
+              <div className="pt-1 border-t" style={{ borderColor: "var(--border)" }}>
+                <p className="text-[12px] font-bold uppercase tracking-[0.12em] mt-4 mb-2" style={{ color: "var(--accent)" }}>
+                  Assign to Nurses
+                </p>
+                <div className="space-y-2.5">
+                  {nurses.map((n) => (
+                    <SplitRow
+                      key={n.id}
+                      label={n.name}
+                      value={nurseQty[n.id] ?? ""}
+                      max={remainingFor(nurseQty[n.id] ?? "", combinedTotal, masterQty)}
+                      onChange={(v) => setNurseQty((f) => ({ ...f, [n.id]: v }))}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         <button type="submit" disabled={saving} className="w-full py-4 rounded-2xl text-base font-semibold text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>
           {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Medicine"}
         </button>
