@@ -55,6 +55,31 @@ export function fmt(n: number) {
   return String(Math.round(n * 100) / 100);
 }
 
+// A single past/current use of a vial or bulk medicine in a booking.
+export interface UsageEntry {
+  bookingId: number;
+  taskId: string;
+  qty: number;
+  completed: boolean;
+  date: string | null;
+  nurseName: string | null;
+}
+
+// A vial or bulk medicine, normalized to one shape so the Reports view can render either.
+export interface ReportItem {
+  id: number;
+  name: string;
+  subtitle?: string;
+  unit: string;
+  qty: number;
+  used: number;
+  expiry: string | null;
+  createdAt: string;
+  locationSummary?: string;
+  assignments: { nurseId: number; nurseName: string; qty: number }[];
+  usages: UsageEntry[];
+}
+
 // A "<label> ... [qty input]" row used to split a quantity across locations or nurses.
 // `max` is advisory only: entry isn't blocked, but a row over its share is flagged in red.
 export function SplitRow({ label, value, max, onChange }: { label: string; value: string; max?: number; onChange: (v: string) => void }) {

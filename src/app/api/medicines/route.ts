@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         name: m.name,
         unit: m.unit,
         expiry: m.expiry ? m.expiry.toISOString().slice(0, 10) : null,
+        createdAt: m.createdAt.toISOString(),
         qty,
         used,
         pool,

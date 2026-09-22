@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
           unit: i.unit,
           location: i.location,
           expiry: i.expiry ? i.expiry.toISOString().slice(0, 10) : null,
+          createdAt: i.createdAt.toISOString(),
           qty,
           assigned,
           used: Math.round(uses.filter((u) => u.completed).reduce((s, u) => s + u.qty, 0) * 100) / 100,

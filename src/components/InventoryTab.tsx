@@ -7,9 +7,10 @@ import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
 import { INVENTORY_LOCATIONS, INVENTORY_UNITS } from "@/lib/constants";
-import { inputStyle, Field, StatCard, fmt, useViewportHeight } from "@/components/inventory-ui";
+import { inputStyle, Field, StatCard, fmt, useViewportHeight, UsageEntry, ReportItem } from "@/components/inventory-ui";
 import MedicinesTab from "@/components/MedicinesTab";
 import ConfirmModal from "@/components/ConfirmModal";
+import InventoryReports from "@/components/InventoryReports";
 
 interface Assignment {
   nurseId: number;
@@ -24,9 +25,10 @@ interface Vial {
   qty: number;
   assigned: number;
   used: number;
-  usages: { bookingId: number; taskId: string; qty: number; completed: boolean }[];
+  usages: UsageEntry[];
   unit: string;
   expiry: string | null;
+  createdAt: string;
   location: string | null;
   assignments: Assignment[];
 }
@@ -48,6 +50,7 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Vial | null>(null);
+  const [showReports, setShowReports] = useState(false);
 
   const load = useCallback(() => {
     return api.inventory
@@ -129,6 +132,20 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
     document.body.removeChild(link);
   }
 
+  const reportItems: ReportItem[] = vials.map((v) => ({
+    id: v.id,
+    name: v.name,
+    subtitle: v.serial,
+    unit: v.unit,
+    qty: v.qty,
+    used: v.used,
+    expiry: v.expiry,
+    createdAt: v.createdAt,
+    locationSummary: v.location ?? undefined,
+    assignments: v.assignments,
+    usages: v.usages,
+  }));
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -138,6 +155,16 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
         </div>
         {isAdmin && (
           <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setShowReports(true)}
+              title="Reports"
+              className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 17V9M13 17v-5M17 17v-9M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </button>
             <button
               onClick={exportVials}
               title="Export"
@@ -217,6 +244,7 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
 
       {showAdd && <VialFormModal nurses={nurses.filter((n) => n.isActive)} onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
       {editing && <VialFormModal vial={editing} nurses={[]} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {showReports && <InventoryReports title="Vial Reports" items={reportItems} onClose={() => setShowReports(false)} />}
     </div>
   );
 }

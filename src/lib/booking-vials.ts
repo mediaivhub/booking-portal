@@ -32,20 +32,33 @@ export async function vialUsage(itemIds: number[], excludeBookingId?: number) {
 }
 
 // Per-booking figures for each vial, for showing "X ml assigned for #ID" (open booking) or
-// "X ml used for #ID" (completed). Cancelled bookings don't count.
+// "X ml used for #ID" (completed). Cancelled bookings don't count. Includes the booking's date
+// and nurse, which the inventory report view uses alongside this.
 export async function vialUsages(itemIds: number[]) {
   const rows = await prisma.bookingVial.findMany({
     where: { itemId: { in: itemIds }, drip: { booking: { status: { not: "cancelled" } } } },
-    select: { itemId: true, qty: true, drip: { select: { booking: { select: { id: true, taskId: true, status: true } } } } },
+    select: {
+      itemId: true,
+      qty: true,
+      drip: { select: { booking: { select: { id: true, taskId: true, status: true, bookingDate: true, nurse: { select: { name: true } } } } } },
+    },
     orderBy: { id: "asc" },
   });
-  const out = new Map<number, { bookingId: number; taskId: string; qty: number; completed: boolean }[]>();
+  const out = new Map<number, { bookingId: number; taskId: string; qty: number; completed: boolean; date: string | null; nurseName: string | null }[]>();
   for (const r of rows) {
     const list = out.get(r.itemId) ?? [];
     const b = r.drip.booking;
     const hit = list.find((x) => x.bookingId === b.id);
     if (hit) hit.qty += Number(r.qty);
-    else list.push({ bookingId: b.id, taskId: b.taskId, qty: Number(r.qty), completed: b.status === "completed" });
+    else
+      list.push({
+        bookingId: b.id,
+        taskId: b.taskId,
+        qty: Number(r.qty),
+        completed: b.status === "completed",
+        date: b.bookingDate ? b.bookingDate.toISOString().slice(0, 10) : null,
+        nurseName: b.nurse?.name ?? null,
+      });
     out.set(r.itemId, list);
   }
   return out;
@@ -74,16 +87,28 @@ export async function medicineUsage(medicineIds: number[], excludeBookingId?: nu
 export async function medicineUsages(medicineIds: number[]) {
   const rows = await prisma.bookingMedicine.findMany({
     where: { medicineId: { in: medicineIds }, drip: { booking: { status: { not: "cancelled" } } } },
-    select: { medicineId: true, qty: true, drip: { select: { booking: { select: { id: true, taskId: true, status: true } } } } },
+    select: {
+      medicineId: true,
+      qty: true,
+      drip: { select: { booking: { select: { id: true, taskId: true, status: true, bookingDate: true, nurse: { select: { name: true } } } } } },
+    },
     orderBy: { id: "asc" },
   });
-  const out = new Map<number, { bookingId: number; taskId: string; qty: number; completed: boolean }[]>();
+  const out = new Map<number, { bookingId: number; taskId: string; qty: number; completed: boolean; date: string | null; nurseName: string | null }[]>();
   for (const r of rows) {
     const list = out.get(r.medicineId) ?? [];
     const b = r.drip.booking;
     const hit = list.find((x) => x.bookingId === b.id);
     if (hit) hit.qty += Number(r.qty);
-    else list.push({ bookingId: b.id, taskId: b.taskId, qty: Number(r.qty), completed: b.status === "completed" });
+    else
+      list.push({
+        bookingId: b.id,
+        taskId: b.taskId,
+        qty: Number(r.qty),
+        completed: b.status === "completed",
+        date: b.bookingDate ? b.bookingDate.toISOString().slice(0, 10) : null,
+        nurseName: b.nurse?.name ?? null,
+      });
     out.set(r.medicineId, list);
   }
   return out;

@@ -8,7 +8,8 @@ import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
 import { INVENTORY_UNITS, INVENTORY_LOCATIONS } from "@/lib/constants";
 import ConfirmModal from "@/components/ConfirmModal";
-import { inputStyle, Field, StatCard, fmt, SplitRow, useViewportHeight } from "@/components/inventory-ui";
+import { inputStyle, Field, StatCard, fmt, SplitRow, useViewportHeight, UsageEntry, ReportItem } from "@/components/inventory-ui";
+import InventoryReports from "@/components/InventoryReports";
 
 interface MedicineAssignment {
   nurseId: number;
@@ -28,7 +29,8 @@ interface Medicine {
   used: number;
   unit: string;
   expiry: string | null;
-  usages: { bookingId: number; taskId: string; qty: number; completed: boolean }[];
+  createdAt: string;
+  usages: UsageEntry[];
   locations: MedicineLocation[];
   assignments: MedicineAssignment[];
 }
@@ -50,6 +52,7 @@ export default function MedicinesTab() {
   const [editing, setEditing] = useState<Medicine | null>(null);
   const [toDelete, setToDelete] = useState<Medicine | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showReports, setShowReports] = useState(false);
   const [today] = useState(() => new Date().toISOString().slice(0, 10));
 
   const load = useCallback(() => {
@@ -98,6 +101,19 @@ export default function MedicinesTab() {
     document.body.removeChild(link);
   }
 
+  const reportItems: ReportItem[] = items.map((m) => ({
+    id: m.id,
+    name: m.name,
+    unit: m.unit,
+    qty: m.qty,
+    used: m.used,
+    expiry: m.expiry,
+    createdAt: m.createdAt,
+    locationSummary: m.locations.length ? m.locations.map((l) => `${l.location} (${fmt(l.qty)})`).join(", ") : undefined,
+    assignments: m.assignments,
+    usages: m.usages,
+  }));
+
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -110,6 +126,16 @@ export default function MedicinesTab() {
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-bold" style={{ color: "var(--text-1)" }}>Master Medicines (Office Inventory)</h2>
         <div className="flex gap-2 shrink-0">
+          <button
+            onClick={() => setShowReports(true)}
+            title="Reports"
+            className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+          >
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 17V9M13 17v-5M17 17v-9M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </button>
           <button
             onClick={exportMedicines}
             title="Export"
@@ -240,6 +266,7 @@ export default function MedicinesTab() {
         />
       )}
       {editing && <MedicineFormModal medicine={editing} nurses={[]} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {showReports && <InventoryReports title="Medicine Reports" items={reportItems} onClose={() => setShowReports(false)} />}
     </div>
   );
 }
