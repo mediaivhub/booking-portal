@@ -58,9 +58,9 @@ export default function InventoryReports({ title, items, onClose }: { title: str
                 </div>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]" style={{ color: "var(--text-2)" }}>
+              <div className="mt-2 text-[12px]" style={{ color: "var(--text-2)" }}>
+                {/* Location lives in the Assigned line below, not here, so it isn't shown twice. */}
                 <p><span style={{ color: "var(--text-3)" }}>Added: </span>{new Date(item.createdAt).toLocaleDateString("en-GB")}</p>
-                {item.locationSummary && <p><span style={{ color: "var(--text-3)" }}>Location: </span>{item.locationSummary}</p>}
               </div>
 
               <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
