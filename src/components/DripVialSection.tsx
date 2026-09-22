@@ -34,6 +34,7 @@ interface BulkMed {
   pool: number;
   left: number;
   locations: { location: string; qty: number }[];
+  assignments: { nurseId: number; nurseName: string; qty: number }[];
 }
 
 interface NurseVial {
@@ -74,8 +75,10 @@ export default function DripVialSection({
   drips: DripLine[];
   onChange: (drips: DripLine[]) => void;
 }) {
+  // DIFC ignores the nurse entirely; a nurse and/or any other location can each independently
+  // supply stock, so the picker is "live" as soon as either one is set.
   const byLocation = location === LOCATION_BASED_STOCK;
-  const activeKey = byLocation ? `loc:${location}` : nurseId ? `nurse:${nurseId}` : null;
+  const activeKey = nurseId || location ? `${nurseId ?? "x"}:${location ?? "x"}` : null;
   const [loaded, setLoaded] = useState<{ key: string; vials: NurseVial[] } | null>(null);
   const [meds, setMeds] = useState<BulkMed[]>([]);
   const isCurrent = !!activeKey && loaded?.key === activeKey;
@@ -85,35 +88,37 @@ export default function DripVialSection({
   useEffect(() => {
     if (!activeKey) return;
     let cancelled = false;
-    const req = byLocation ? api.inventory.list(undefined, excludeBookingId, location!) : api.inventory.list(nurseId!, excludeBookingId);
-    req
+    api.inventory
+      .list(nurseId ?? undefined, excludeBookingId, location ?? undefined)
       .then((v) => !cancelled && setLoaded({ key: activeKey, vials: v }))
       .catch(() => !cancelled && setLoaded({ key: activeKey, vials: [] }));
     return () => {
       cancelled = true;
     };
-  }, [activeKey, byLocation, location, nurseId, excludeBookingId]);
+  }, [activeKey, location, nurseId, excludeBookingId]);
 
-  // Bulk medicines: shared office stock, unless a medicine has been split out to specific nurses,
-  // in which case only the nurses it's assigned to can use it (same rule as vials).
+  // Bulk medicines: shared stock, unless split out to specific nurses (only those nurses can use
+  // it then) or to specific locations (only bookings at that location can use it then).
   useEffect(() => {
-    if (!nurseId) {
+    if (!activeKey) {
       setMeds([]);
       return;
     }
     let cancelled = false;
     api.medicines
-      .list(nurseId, excludeBookingId)
+      .list(nurseId ?? undefined, excludeBookingId)
       .then((m) => !cancelled && setMeds(m))
       .catch(() => !cancelled && setMeds([]));
     return () => {
       cancelled = true;
     };
-  }, [nurseId, excludeBookingId]);
+  }, [activeKey, nurseId, excludeBookingId]);
 
-  // In location mode, only offer medicines that were actually split to this location — the shared/
-  // unassigned pool otherwise shows regardless of where it's sitting.
-  const visibleMeds = byLocation ? meds.filter((m) => m.locations.some((l) => l.location === location)) : meds;
+  // Once a location is picked, only offer medicines assigned to this nurse, or unassigned ones
+  // actually split to that location — the shared pool otherwise ignores where it's sitting.
+  const visibleMeds = !location
+    ? meds
+    : meds.filter((m) => (nurseId != null && m.assignments.some((a) => a.nurseId === nurseId)) || (m.assignments.length === 0 && m.locations.some((l) => l.location === location)));
 
   const add = (kind: DripLine["kind"]) => onChange([...drips, { kind, dripName: "", nss: "", nssQty: "1", vials: [{ itemId: "", qty: "1" }], medicines: [] }]);
   const patch = (i: number, p: Partial<DripLine>) => onChange(drips.map((d, idx) => (idx === i ? { ...d, ...p } : d)));
@@ -161,8 +166,21 @@ export default function DripVialSection({
   ];
 
   let empty: string | null = null;
-  if (!activeKey) empty = "Select a nurse first to see available vials";
+  if (!activeKey) empty = "Select a nurse or location first to see available vials";
   else if (drips.length === 0) empty = "Tap + CS Drip or + Upsell to record a drip";
+
+  const noVialsMessage = byLocation
+    ? `No unassigned vials at ${location}`
+    : location && nurseId
+      ? `No vials assigned to this nurse or unassigned at ${location}`
+      : location
+        ? `No unassigned vials at ${location}`
+        : "No vials are assigned to this nurse";
+  const noMedsMessage = location && nurseId
+    ? `No bulk medicines assigned to this nurse or at ${location}`
+    : location
+      ? `No bulk medicines at ${location}`
+      : "No bulk medicines in inventory";
 
   return (
     <div className="pt-3 space-y-3 border-t" style={{ borderColor: "var(--border)" }}>
@@ -317,9 +335,7 @@ export default function DripVialSection({
                 })}
                 {loading && <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Loading vials...</p>}
                 {!loading && vials.length === 0 && (
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-                    {byLocation ? `No unassigned vials at ${location}` : "No vials are assigned to this nurse"}
-                  </p>
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{noVialsMessage}</p>
                 )}
                 <button
                   type="button"
@@ -383,9 +399,7 @@ export default function DripVialSection({
                   );
                 })}
                 {visibleMeds.length === 0 && (
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-                    {byLocation ? `No bulk medicines at ${location}` : "No bulk medicines in inventory"}
-                  </p>
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{noMedsMessage}</p>
                 )}
                 <button
                   type="button"

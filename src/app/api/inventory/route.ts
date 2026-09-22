@@ -9,41 +9,68 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Admins can ask for one nurse's stock, or — for a location whose stock isn't carried by a
-  // specific nurse (e.g. the DIFC lounge) — the unassigned stock physically sitting there.
+  // Admins can ask for one nurse's stock, a location's stock, or both. The DIFC lounge ignores
+  // the nurse entirely (unassigned stock physically sitting there); every other location instead
+  // combines the nurse's own carried stock with whatever's unassigned and sitting at that location.
   const forNurse = req.nextUrl.searchParams.get("nurseId");
   const forLocation = req.nextUrl.searchParams.get("location");
   const exclude = Number(req.nextUrl.searchParams.get("excludeBooking")) || undefined;
 
-  if (session.user.role === "admin" && forLocation === LOCATION_BASED_STOCK && !forNurse) {
-    const items = await prisma.inventoryItem.findMany({
-      where: { isActive: true, location: forLocation, assignments: { none: {} } },
-      orderBy: { name: "asc" },
-    });
-    const ids = items.map((i) => i.id);
+  if (session.user.role === "admin" && forLocation) {
+    const nurseId = forNurse ? Number(forNurse) : null;
+    const pureLocation = forLocation === LOCATION_BASED_STOCK;
+
+    const [nurseAssignments, locationItems] = await Promise.all([
+      nurseId && !pureLocation
+        ? prisma.inventoryAssignment.findMany({ where: { nurseId, item: { isActive: true } }, include: { item: true } })
+        : Promise.resolve([]),
+      prisma.inventoryItem.findMany({ where: { isActive: true, location: forLocation, assignments: { none: {} } }, orderBy: { name: "asc" } }),
+    ]);
+
+    const ids = [...new Set([...nurseAssignments.map((a) => a.itemId), ...locationItems.map((i) => i.id)])];
     const [usage, usages] = await Promise.all([vialUsage(ids, exclude), vialUsages(ids)]);
-    return Response.json(
-      items.map((i) => {
-        const total = Number(i.qty);
-        const left = Math.max(0, round2(total - (usage.all.get(i.id) ?? 0)));
-        return {
-          id: i.id,
-          name: i.name,
-          serial: i.serial,
-          unit: i.unit,
-          expiry: i.expiry ? i.expiry.toISOString().slice(0, 10) : null,
-          createdAt: i.createdAt.toISOString(),
-          location: i.location,
-          qty: total,
-          assigned: 0,
-          assignments: [],
-          total,
-          usages: usages.get(i.id) ?? [],
-          pool: left,
-          left,
-        };
-      })
-    );
+
+    const fromNurse = nurseAssignments.map((a) => {
+      const total = Number(a.item.qty);
+      return {
+        id: a.item.id,
+        name: a.item.name,
+        serial: a.item.serial,
+        unit: a.item.unit,
+        expiry: a.item.expiry ? a.item.expiry.toISOString().slice(0, 10) : null,
+        createdAt: a.item.createdAt.toISOString(),
+        location: a.item.location,
+        qty: Number(a.qty),
+        assigned: 0,
+        assignments: [],
+        total,
+        usages: usages.get(a.itemId) ?? [],
+        pool: Math.max(0, round2(total - (usage.all.get(a.itemId) ?? 0))),
+        left: Math.max(0, round2(Number(a.qty) - (usage.byNurse.get(`${a.itemId}:${nurseId}`) ?? 0))),
+      };
+    });
+    const fromLocation = locationItems.map((i) => {
+      const total = Number(i.qty);
+      const left = Math.max(0, round2(total - (usage.all.get(i.id) ?? 0)));
+      return {
+        id: i.id,
+        name: i.name,
+        serial: i.serial,
+        unit: i.unit,
+        expiry: i.expiry ? i.expiry.toISOString().slice(0, 10) : null,
+        createdAt: i.createdAt.toISOString(),
+        location: i.location,
+        qty: total,
+        assigned: 0,
+        assignments: [],
+        total,
+        usages: usages.get(i.id) ?? [],
+        pool: left,
+        left,
+      };
+    });
+
+    return Response.json([...fromNurse, ...fromLocation]);
   }
 
   if (session.user.role === "admin" && !forNurse) {
