@@ -366,8 +366,13 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl max-h-full overflow-y-auto overflow-x-hidden rounded-3xl p-4 sm:p-6 space-y-4"
-        style={{ background: "var(--bg)", animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards` }}
+        className="w-full max-w-xl overflow-y-auto overflow-x-hidden overscroll-contain rounded-3xl p-4 sm:p-6 space-y-4"
+        style={{
+          background: "var(--bg)",
+          maxHeight: "calc(100dvh - 24px)",
+          WebkitOverflowScrolling: "touch",
+          animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards`,
+        }}
       >
         <div className="flex items-start justify-between">
           <h3 className="text-xl font-bold" style={{ color: "var(--text-1)" }}>{isEdit ? "Edit Vial" : "Add New Vial"}</h3>
