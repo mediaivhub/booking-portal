@@ -66,7 +66,8 @@ export default function InventoryReports({ title, items, onClose }: { title: str
               <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
                 <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--primary-text)" }}>Assigned</p>
                 {item.assignments.length === 0 ? (
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>Unassigned</p>
+                  // Not held by a nurse — it's sitting at its location instead, so show that rather than a bare "Unassigned".
+                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{item.locationSummary || "Unassigned"}</p>
                 ) : (
                   <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
                     {item.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ")}
