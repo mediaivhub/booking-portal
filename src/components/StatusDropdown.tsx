@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { STATUS_CONFIG } from "./StatusBadge";
 
 const STATUSES = [
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export default function StatusDropdown({ currentStatus, onSelect, onClose }: Props) {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
@@ -71,6 +72,7 @@ export default function StatusDropdown({ currentStatus, onSelect, onClose }: Pro
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

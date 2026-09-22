@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   nurseName: string;
@@ -21,7 +22,7 @@ export default function ResetPasswordModal({ nurseName, onSubmit, onClose }: Pro
     onSubmit(password);
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
@@ -71,6 +72,7 @@ export default function ResetPasswordModal({ nurseName, onSubmit, onClose }: Pro
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

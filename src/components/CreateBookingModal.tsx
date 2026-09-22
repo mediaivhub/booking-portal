@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
 import DatePicker from "./DatePicker";
@@ -79,7 +80,7 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
     setLoading(false);
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100]" onClick={requestClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
@@ -172,7 +173,8 @@ export default function CreateBookingModal({ nurses, onClose, onCreated }: Props
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

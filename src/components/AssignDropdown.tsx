@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Nurse {
   id: number;
@@ -23,7 +24,7 @@ export default function AssignDropdown({ nurses, currentNurseId, onSelect, onClo
     onSelect(selectedId);
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100]" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
@@ -84,6 +85,7 @@ export default function AssignDropdown({ nurses, currentNurseId, onSelect, onClo
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

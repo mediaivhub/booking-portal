@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import StatusBadge from "./StatusBadge";
 import StatusDropdown from "./StatusDropdown";
 import AssignDropdown from "./AssignDropdown";
@@ -53,10 +54,11 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
   }, [bookingId]);
 
   if (!booking) {
-    return (
+    return createPortal(
       <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
         <div className="animate-spin w-8 h-8 border-2 rounded-full" style={{ borderColor: "var(--border)", borderTopColor: "var(--primary)" }} />
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -152,7 +154,7 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[200] flex flex-col animate-[slideUp_0.3s_ease]" style={{ background: "var(--bg-card)" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4" style={{ background: "var(--primary)", padding: "16px", paddingTop: "calc(16px + env(safe-area-inset-top, 0px))" }}>
@@ -453,7 +455,8 @@ export default function BookingDetail({ bookingId, isAdmin, onClose, onUpdate, n
           onClose={() => setShowDeleteConfirm(false)}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 

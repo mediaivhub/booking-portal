@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+
 interface Props {
   title: string;
   message: string;
@@ -10,7 +12,8 @@ interface Props {
 }
 
 export default function ConfirmModal({ title, message, confirmLabel = "Delete", onConfirm, onClose, loading }: Props) {
-  return (
+  // Portaled so it isn't trapped by a scrolling ancestor's stacking context (e.g. tabs nested in <main>).
+  return createPortal(
     <div className="fixed inset-0 z-[160] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
@@ -41,6 +44,7 @@ export default function ConfirmModal({ title, message, confirmLabel = "Delete", 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

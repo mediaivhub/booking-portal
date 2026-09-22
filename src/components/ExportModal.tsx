@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import DateRangePicker from "./DateRangePicker";
 
 interface Props {
@@ -43,7 +44,7 @@ export default function ExportModal({ onClose, onExport }: Props) {
     onClose();
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[160] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
@@ -91,6 +92,7 @@ export default function ExportModal({ onClose, onExport }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

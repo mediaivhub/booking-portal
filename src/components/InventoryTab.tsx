@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
@@ -355,16 +356,17 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
     }
   }
 
-  return (
+  // Portaled so it isn't trapped by <main>'s scroll container (breaks position:fixed stacking on iOS).
+  return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center p-3"
-      style={{ background: "rgba(0,0,0,0.4)", zIndex: 100, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
+      style={{ background: "rgba(0,0,0,0.4)", zIndex: 200, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
       onClick={() => close(onClose)}
     >
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl max-h-full overflow-y-auto rounded-3xl p-6 space-y-4"
+        className="w-full max-w-xl max-h-full overflow-y-auto overflow-x-hidden rounded-3xl p-4 sm:p-6 space-y-4"
         style={{ background: "var(--bg)", animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards` }}
       >
         <div className="flex items-start justify-between">
@@ -398,7 +400,8 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
           {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Vial"}
         </button>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }
 

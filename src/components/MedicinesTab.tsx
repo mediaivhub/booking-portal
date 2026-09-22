@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
@@ -272,10 +273,12 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
     }
   }
 
-  return (
+  // Portaled to <body>: `<main>` scrolls with iOS's momentum-scroll style, which traps nested
+  // position:fixed elements and breaks their stacking order against page furniture like the FAB.
+  return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center p-3"
-      style={{ background: "rgba(0,0,0,0.4)", zIndex: 100, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
+      style={{ background: "rgba(0,0,0,0.4)", zIndex: 200, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
       onClick={() => close(onClose)}
     >
       <form
@@ -354,6 +357,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
           {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Medicine"}
         </button>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }
