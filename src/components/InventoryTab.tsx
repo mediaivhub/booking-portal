@@ -372,8 +372,10 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
           background: "var(--bg)",
           // Measured px height, anchored near the top: overflow can only push the bottom
           // off-screen, never the header (see useViewportHeight for why not dvh/max-h-full).
-          maxHeight: Math.max(200, viewportHeight - 24),
+          // The extra 40px leaves room for iOS's home-indicator gesture bar.
+          maxHeight: Math.max(200, viewportHeight - 24 - 40),
           marginTop: "max(0px, env(safe-area-inset-top, 0px))",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
           WebkitOverflowScrolling: "touch",
           animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards`,
         }}

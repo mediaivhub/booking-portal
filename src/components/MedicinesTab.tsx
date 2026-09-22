@@ -291,9 +291,11 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
           // A measured px height (not vh/dvh/max-h-full) so the card is reliably capped to what's
           // actually visible, including installed PWAs where viewport units can't be trusted.
           // Anchored near the top (not centered) so overflow can only push the bottom off-screen,
-          // never the header.
-          maxHeight: Math.max(200, viewportHeight - 24),
+          // never the header. The extra 40px leaves room for iOS's home-indicator gesture bar,
+          // which otherwise overlaps the last bit of content right at the screen edge.
+          maxHeight: Math.max(200, viewportHeight - 24 - 40),
           marginTop: "max(0px, env(safe-area-inset-top, 0px))",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
           WebkitOverflowScrolling: "touch",
           animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards`,
         }}
