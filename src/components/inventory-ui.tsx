@@ -1,6 +1,27 @@
 // Small pieces shared by the vial and bulk-medicine views of the Inventory tab.
 
+import { useEffect, useState } from "react";
+
 export const inputStyle = { background: "var(--bg)", borderColor: "var(--border)", color: "var(--text-1)" };
+
+// The real visible viewport height in px, kept live. CSS `dvh` should handle this, but support is
+// inconsistent in some mobile/installed-PWA webviews, which was letting tall modals render taller
+// than what's actually visible and pushing their header off the top of the screen. Measuring it in
+// JS via visualViewport (falls back to innerHeight) sidesteps that entirely.
+export function useViewportHeight() {
+  const [height, setHeight] = useState(() => (typeof window === "undefined" ? 800 : window.innerHeight));
+  useEffect(() => {
+    const update = () => setHeight(window.visualViewport?.height ?? window.innerHeight);
+    update();
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  return height;
+}
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

@@ -7,7 +7,7 @@ import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
 import { INVENTORY_LOCATIONS, INVENTORY_UNITS } from "@/lib/constants";
-import { inputStyle, Field, StatCard, fmt } from "@/components/inventory-ui";
+import { inputStyle, Field, StatCard, fmt, useViewportHeight } from "@/components/inventory-ui";
 import MedicinesTab from "@/components/MedicinesTab";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -337,6 +337,7 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
   }
   const field = "w-full px-4 py-3 rounded-2xl border outline-none text-[15px]";
   const fieldStyle = { background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" };
+  const viewportHeight = useViewportHeight();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -359,7 +360,7 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
   // Portaled so it isn't trapped by <main>'s scroll container (breaks position:fixed stacking on iOS).
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center p-3"
+      className="fixed inset-0 flex items-start sm:items-center justify-center p-3"
       style={{ background: "rgba(0,0,0,0.4)", zIndex: 200, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
       onClick={() => close(onClose)}
     >
@@ -369,7 +370,10 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
         className="w-full max-w-xl overflow-y-auto overflow-x-hidden overscroll-contain rounded-3xl p-4 sm:p-6 space-y-4"
         style={{
           background: "var(--bg)",
-          maxHeight: "calc(100dvh - 24px)",
+          // Measured px height, anchored near the top: overflow can only push the bottom
+          // off-screen, never the header (see useViewportHeight for why not dvh/max-h-full).
+          maxHeight: Math.max(200, viewportHeight - 24),
+          marginTop: "max(0px, env(safe-area-inset-top, 0px))",
           WebkitOverflowScrolling: "touch",
           animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards`,
         }}

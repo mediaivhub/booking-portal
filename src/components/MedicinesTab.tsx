@@ -8,7 +8,7 @@ import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
 import { INVENTORY_UNITS, INVENTORY_LOCATIONS } from "@/lib/constants";
 import ConfirmModal from "@/components/ConfirmModal";
-import { inputStyle, Field, StatCard, fmt, SplitRow } from "@/components/inventory-ui";
+import { inputStyle, Field, StatCard, fmt, SplitRow, useViewportHeight } from "@/components/inventory-ui";
 
 interface MedicineAssignment {
   nurseId: number;
@@ -247,6 +247,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
   const nurseTotal = Object.values(nurseQty).reduce((s, v) => s + (Number(v) || 0), 0);
   // Locations and nurses aren't separate pools — both draw from the same master quantity.
   const combinedTotal = locationTotal + nurseTotal;
+  const viewportHeight = useViewportHeight();
 
   function close(after: () => void) {
     setClosing(true);
@@ -277,7 +278,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
   // position:fixed elements and breaks their stacking order against page furniture like the FAB.
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center p-3"
+      className="fixed inset-0 flex items-start sm:items-center justify-center p-3"
       style={{ background: "rgba(0,0,0,0.4)", zIndex: 200, animation: `${closing ? "fadeOut" : "fadeIn"} 0.2s ease forwards` }}
       onClick={() => close(onClose)}
     >
@@ -287,9 +288,12 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
         className="w-full max-w-xl overflow-y-auto overflow-x-hidden overscroll-contain rounded-3xl p-4 sm:p-6 space-y-4"
         style={{
           background: "var(--bg)",
-          // dvh (not vh/max-h-full) so the card is capped to what's actually visible on mobile,
-          // including installed PWAs where the ancestor's resolved height can't be trusted.
-          maxHeight: "calc(100dvh - 24px)",
+          // A measured px height (not vh/dvh/max-h-full) so the card is reliably capped to what's
+          // actually visible, including installed PWAs where viewport units can't be trusted.
+          // Anchored near the top (not centered) so overflow can only push the bottom off-screen,
+          // never the header.
+          maxHeight: Math.max(200, viewportHeight - 24),
+          marginTop: "max(0px, env(safe-area-inset-top, 0px))",
           WebkitOverflowScrolling: "touch",
           animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards`,
         }}
