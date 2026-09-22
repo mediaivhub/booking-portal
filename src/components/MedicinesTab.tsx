@@ -87,6 +87,17 @@ export default function MedicinesTab() {
     }
   }
 
+  function exportMedicines() {
+    const params: Record<string, string> = {};
+    if (search) params.search = search;
+    const link = document.createElement("a");
+    link.href = api.medicines.exportUrl(params);
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -98,13 +109,27 @@ export default function MedicinesTab() {
 
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-bold" style={{ color: "var(--text-1)" }}>Master Medicines (Office Inventory)</h2>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="shrink-0 px-3 py-2 rounded-xl border-2 text-[13px] font-semibold"
-          style={{ borderColor: "var(--primary-text)", color: "var(--primary-text)" }}
-        >
-          + Add Medicine
-        </button>
+        <div className="flex gap-2 shrink-0">
+          <button
+            onClick={exportMedicines}
+            title="Export"
+            className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+          >
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="px-3 py-2 rounded-xl border-2 text-[13px] font-semibold"
+            style={{ borderColor: "var(--primary-text)", color: "var(--primary-text)" }}
+          >
+            + Add Medicine
+          </button>
+        </div>
       </div>
 
       <input

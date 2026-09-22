@@ -81,6 +81,10 @@ export const api = {
     remove: (id: number) => request(`/inventory/${id}`, { method: "DELETE" }),
     assign: (id: number, nurseId: number | null) =>
       request(`/inventory/${id}/assign`, { method: "PUT", body: JSON.stringify({ nurseId }) }),
+    exportUrl: (params?: Record<string, string>) => {
+      const qs = params && Object.keys(params).length ? "?" + new URLSearchParams(params).toString() : "";
+      return `${BASE}/inventory/export${qs}`;
+    },
   },
 
   medicines: {
@@ -95,6 +99,10 @@ export const api = {
     update: (id: number, data: Record<string, unknown>) =>
       request(`/medicines/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
     remove: (id: number) => request(`/medicines/${id}`, { method: "DELETE" }),
+    exportUrl: (params?: Record<string, string>) => {
+      const qs = params && Object.keys(params).length ? "?" + new URLSearchParams(params).toString() : "";
+      return `${BASE}/medicines/export${qs}`;
+    },
   },
 
   push: {

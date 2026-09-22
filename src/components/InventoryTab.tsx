@@ -44,6 +44,7 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
   const [search, setSearch] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [staffFilter, setStaffFilter] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Vial | null>(null);
@@ -83,10 +84,22 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
     { label: "Expiring Soon", value: "soon" },
     { label: "Expired", value: "expired" },
   ];
+  const staffOptions = [
+    { label: "All Staff", value: "" },
+    { label: "Unassigned", value: "unassigned" },
+    ...nurses.map((n) => ({ label: n.name, value: String(n.id) })),
+  ];
 
   const filtered = vials.filter((v) => {
     if (!(v.name.toLowerCase().includes(q) || v.serial.toLowerCase().includes(q))) return false;
     if (locationFilter && v.location !== locationFilter) return false;
+    if (isAdmin && staffFilter) {
+      if (staffFilter === "unassigned") {
+        if (v.assignments.length > 0) return false;
+      } else if (!v.assignments.some((a) => String(a.nurseId) === staffFilter)) {
+        return false;
+      }
+    }
     const expired = !!v.expiry && v.expiry < today;
     switch (statusFilter) {
       case "available": return !expired && v.qty - v.used > 0;
@@ -102,21 +115,49 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
   const totalQty = vials.reduce((s, v) => s + v.qty, 0);
   const totalUsed = vials.reduce((s, v) => s + v.used, 0);
 
+  function exportVials() {
+    const params: Record<string, string> = {};
+    if (locationFilter) params.location = locationFilter;
+    if (statusFilter) params.status = statusFilter;
+    if (staffFilter) params.staff = staffFilter;
+    if (search) params.search = search;
+    const link = document.createElement("a");
+    link.href = api.inventory.exportUrl(params);
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-bold" style={{ color: "var(--text-1)" }}>{isAdmin ? "Inventory" : "My Inventory"}</h2>
           <p className="text-[13px]" style={{ color: "var(--text-3)" }}>{isAdmin ? "Vial stock, assignments and usage" : "Vials assigned to you"}</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="px-3 py-2 rounded-xl text-[13px] font-semibold text-white"
-            style={{ background: "var(--primary)" }}
-          >
-            + Add Vial
-          </button>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={exportVials}
+              title="Export"
+              className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-3 py-2 rounded-xl text-[13px] font-semibold text-white"
+              style={{ background: "var(--primary)" }}
+            >
+              + Add Vial
+            </button>
+          </div>
         )}
       </div>
 
@@ -143,9 +184,12 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
         style={inputStyle}
       />
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Select value={locationFilter} onChange={setLocationFilter} options={locationOptions} className="px-4 py-2.5 rounded-2xl border outline-none text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" }} />
         <Select value={statusFilter} onChange={setStatusFilter} options={statusOptions} className="px-4 py-2.5 rounded-2xl border outline-none text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" }} />
+        {isAdmin && (
+          <Select value={staffFilter} onChange={setStaffFilter} options={staffOptions} className="px-4 py-2.5 rounded-2xl border outline-none text-sm" style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" }} />
+        )}
       </div>
 
       {loading ? (
