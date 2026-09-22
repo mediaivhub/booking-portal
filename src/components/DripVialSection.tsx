@@ -161,7 +161,7 @@ export default function DripVialSection({
   ];
 
   let empty: string | null = null;
-  if (!nurseId) empty = "Select a nurse first to see available vials";
+  if (!activeKey) empty = "Select a nurse first to see available vials";
   else if (drips.length === 0) empty = "Tap + CS Drip or + Upsell to record a drip";
 
   return (
@@ -171,7 +171,7 @@ export default function DripVialSection({
         <div className="flex gap-2 shrink-0">
           <button
             type="button"
-            disabled={!nurseId}
+            disabled={!activeKey}
             onClick={() => add("cs_drip")}
             className="px-3.5 py-2 rounded-xl border text-[13px] font-semibold cursor-pointer transition-[filter,transform] hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100 disabled:active:scale-100"
             style={{ background: "rgba(82,183,136,0.16)", borderColor: "rgba(82,183,136,0.4)", color: "var(--primary-text)" }}
@@ -180,7 +180,7 @@ export default function DripVialSection({
           </button>
           <button
             type="button"
-            disabled={!nurseId}
+            disabled={!activeKey}
             onClick={() => add("upsell")}
             className="px-3.5 py-2 rounded-xl border text-[13px] font-semibold cursor-pointer transition-[filter,transform] hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100 disabled:active:scale-100"
             style={{ background: "rgba(230,81,0,0.14)", borderColor: "rgba(230,81,0,0.4)", color: "#e65100" }}

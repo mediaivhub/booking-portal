@@ -124,7 +124,9 @@ export async function validateDrips(
   location?: string | null
 ): Promise<{ drips: DripInput[] } | { error: string }> {
   if (!Array.isArray(raw) || raw.length === 0) return { drips: [] };
-  if (!nurseId) return { error: "Assign a nurse before adding drips" };
+  // Location-based stock (e.g. the DIFC lounge) doesn't depend on a nurse at all, so drips there
+  // don't need one assigned yet either — every other location still requires it.
+  if (!nurseId && location !== LOCATION_BASED_STOCK) return { error: "Assign a nurse before adding drips" };
 
   const drips: DripInput[] = [];
   for (const r of raw) {
@@ -176,6 +178,8 @@ export async function validateDrips(
         if (total > poolLeft) return { error: `${item.name}: only ${Math.max(0, poolLeft)} left in stock` };
       }
     } else {
+      // location !== LOCATION_BASED_STOCK here, so the earlier guard already guarantees nurseId is set.
+      if (nurseId == null) return { error: "Assign a nurse before adding drips" };
       const assignments = await prisma.inventoryAssignment.findMany({
         where: { nurseId, itemId: { in: [...totals.keys()] }, item: { isActive: true } },
         include: { item: { select: { name: true, qty: true } } },
