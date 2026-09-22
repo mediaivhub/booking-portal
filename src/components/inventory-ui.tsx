@@ -8,10 +8,20 @@ export const inputStyle = { background: "var(--bg)", borderColor: "var(--border)
 // inconsistent in some mobile/installed-PWA webviews, which was letting tall modals render taller
 // than what's actually visible and pushing their header off the top of the screen. Measuring it in
 // JS via visualViewport (falls back to innerHeight) sidesteps that entirely.
+//
+// The on-screen keyboard also fires a visualViewport resize (shrinking it by 250-350px), which was
+// making the modal's height collapse the instant a field was focused — fighting the browser's own
+// "scroll the focused input into view" behavior and producing a jarring double jump. A keyboard-sized
+// shrink is ignored here so the modal keeps its pre-keyboard height and lets the normal scroll-into-view
+// behavior work inside it, same as a modal that never tried to react to the keyboard at all.
 export function useViewportHeight() {
   const [height, setHeight] = useState(() => (typeof window === "undefined" ? 800 : window.innerHeight));
   useEffect(() => {
-    const update = () => setHeight(window.visualViewport?.height ?? window.innerHeight);
+    const update = () => {
+      const vv = window.visualViewport;
+      if (vv && window.innerHeight - vv.height > 150) return;
+      setHeight(vv?.height ?? window.innerHeight);
+    };
     update();
     window.visualViewport?.addEventListener("resize", update);
     window.addEventListener("resize", update);
