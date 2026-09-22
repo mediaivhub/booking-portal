@@ -82,6 +82,12 @@ export async function GET(req: NextRequest) {
   sheet.getRow(1).font = { bold: true };
 
   for (const v of rows) {
+    // Same rule as the Reports view: show the location alongside any nurse assignment, not just
+    // as a fallback — a vial with no nurse holding it is still sitting somewhere, not "empty".
+    const assignedTo =
+      [v.assignments.length > 0 ? v.assignments.map((a) => `${a.nurseName} (${a.qty})`).join(", ") : null, v.location || null]
+        .filter(Boolean)
+        .join(" · ") || "Unassigned";
     sheet.addRow({
       name: v.name,
       serial: v.serial,
@@ -91,7 +97,7 @@ export async function GET(req: NextRequest) {
       unit: v.unit,
       used: v.used,
       available: Math.max(0, Math.round((v.qty - v.used) * 100) / 100),
-      assignedTo: v.assignments.map((a) => `${a.nurseName} (${a.qty})`).join(", "),
+      assignedTo,
     });
   }
 

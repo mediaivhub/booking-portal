@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
     .map((m) => {
       const qty = Number(m.qty);
       const used = Math.round((usage.all.get(m.id) ?? 0) * 100) / 100;
+      const locations = m.locations.map((l) => `${l.location} (${Number(l.qty)})`).join(", ");
+      const nurses = m.assignments.map((a) => `${a.nurse.name} (${Number(a.qty)})`).join(", ");
+      // Same rule as the Reports view: show location alongside any nurse assignment, not just as a
+      // fallback — a medicine can be both split across locations and assigned to nurses at once.
+      const assignedTo = [nurses || null, locations || null].filter(Boolean).join(" · ") || "Unassigned";
       return {
         name: m.name,
         unit: m.unit,
@@ -36,8 +41,8 @@ export async function GET(req: NextRequest) {
         qty,
         used,
         available: Math.max(0, Math.round((qty - used) * 100) / 100),
-        locations: m.locations.map((l) => `${l.location} (${Number(l.qty)})`).join(", "),
-        assignedTo: m.assignments.map((a) => `${a.nurse.name} (${Number(a.qty)})`).join(", "),
+        locations,
+        assignedTo,
       };
     });
 
