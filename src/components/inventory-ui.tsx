@@ -30,9 +30,10 @@ export function SplitRow({ label, value, max, onChange }: { label: string; value
   const over = max !== undefined && value !== "" && Number(value) > max;
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[14px]" style={{ color: "var(--text-1)" }}>{label}</span>
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        {/* min-w-0 lets a long name wrap/shrink instead of forcing the row to overflow on narrow screens. */}
+        <span className="text-[14px] min-w-0 flex-1 break-words" style={{ color: "var(--text-1)" }}>{label}</span>
+        <div className="flex items-center gap-1.5 shrink-0">
           <input
             type="number"
             min="0"
@@ -40,7 +41,7 @@ export function SplitRow({ label, value, max, onChange }: { label: string; value
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="0"
-            className="w-28 px-3 py-1.5 rounded-lg border outline-none text-sm text-right"
+            className="w-20 sm:w-28 px-2.5 sm:px-3 py-1.5 rounded-lg border outline-none text-sm text-right"
             style={over ? { ...inputStyle, borderColor: "#c62828" } : inputStyle}
           />
           <span className="text-[11px]" style={{ color: "var(--text-3)" }}>qty</span>

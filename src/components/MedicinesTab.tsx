@@ -281,7 +281,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl max-h-full overflow-y-auto rounded-3xl p-6 space-y-4"
+        className="w-full max-w-xl max-h-full overflow-y-auto overflow-x-hidden rounded-3xl p-4 sm:p-6 space-y-4"
         style={{ background: "var(--bg)", animation: `${closing ? "popOut" : "popIn"} 0.2s ease forwards` }}
       >
         <div className="flex items-start justify-between">
