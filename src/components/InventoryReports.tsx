@@ -65,14 +65,16 @@ export default function InventoryReports({ title, items, onClose }: { title: str
 
               <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
                 <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--primary-text)" }}>Assigned</p>
-                {item.assignments.length === 0 ? (
-                  // Not held by a nurse — it's sitting at its location instead, so show that rather than a bare "Unassigned".
-                  <p className="text-[12px]" style={{ color: "var(--text-3)" }}>{item.locationSummary || "Unassigned"}</p>
-                ) : (
-                  <p className="text-[12px]" style={{ color: "var(--text-2)" }}>
-                    {item.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ")}
-                  </p>
-                )}
+                {/* Location shows alongside any nurse assignments (a medicine can be both split across
+                    locations and assigned to nurses), falling back to "Unassigned" only if there's neither. */}
+                <p className="text-[12px]" style={{ color: item.assignments.length > 0 ? "var(--text-2)" : "var(--text-3)" }}>
+                  {[
+                    item.assignments.length > 0 ? item.assignments.map((a) => `${a.nurseName} (${fmt(a.qty)})`).join(", ") : null,
+                    item.locationSummary || null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Unassigned"}
+                </p>
               </div>
 
               <div className="mt-2 pt-2 border-t space-y-0.5" style={{ borderColor: "var(--border)" }}>
