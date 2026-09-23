@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import ExcelJS from "exceljs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { vialUsage } from "@/lib/booking-vials";
+import { vialUsage, vialUsages } from "@/lib/booking-vials";
 
 // Mirrors the filters on the Vials tab (search/location/status/staff) so the export matches what's on screen.
 export async function GET(req: NextRequest) {
@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
     orderBy: { name: "asc" },
   });
   const usage = await vialUsage(items.map((i) => i.id));
+  const usages = await vialUsages(items.map((i) => i.id));
 
   const today = new Date().toISOString().slice(0, 10);
   const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
@@ -42,6 +43,8 @@ export async function GET(req: NextRequest) {
         qty,
         used,
         assignments: i.assignments.map((a) => ({ nurseId: a.nurseId, nurseName: a.nurse.name, qty: Number(a.qty) })),
+        // Only completed bookings count as "used" (matches the Used column); open/reserved drips aren't usage yet.
+        usage: (usages.get(i.id) ?? []).filter((u) => u.completed),
       };
     })
     .filter((v) => {
@@ -78,6 +81,7 @@ export async function GET(req: NextRequest) {
     { header: "Used", key: "used", width: 10 },
     { header: "Available", key: "available", width: 10 },
     { header: "Assigned To", key: "assignedTo", width: 30 },
+    { header: "Usage", key: "usage", width: 45 },
   ];
   sheet.getRow(1).font = { bold: true };
 
@@ -98,6 +102,7 @@ export async function GET(req: NextRequest) {
       used: v.used,
       available: Math.max(0, Math.round((v.qty - v.used) * 100) / 100),
       assignedTo,
+      usage: v.usage.map((u) => `${u.taskId} - ${u.nurseName ?? "Unassigned"} (${Math.round(u.qty * 100) / 100})`).join("; ") || "",
     });
   }
 

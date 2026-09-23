@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
-import { INVENTORY_UNITS, INVENTORY_LOCATIONS } from "@/lib/constants";
+import { INVENTORY_UNITS, INVENTORY_LOCATIONS, MEDICINE_NAMES } from "@/lib/constants";
 import ConfirmModal from "@/components/ConfirmModal";
 import { inputStyle, Field, StatCard, fmt, SplitRow, useViewportHeight, UsageEntry, ReportItem } from "@/components/inventory-ui";
 import InventoryReports from "@/components/InventoryReports";
@@ -284,7 +284,7 @@ function remainingFor(rowValue: string, combinedTotal: number, master: number): 
 function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: Medicine; nurses: NurseOption[]; onClose: () => void; onSaved: () => void }) {
   const isEdit = !!medicine;
   const [form, setForm] = useState({
-    name: medicine?.name ?? "",
+    name: medicine?.name ?? MEDICINE_NAMES[0],
     qty: medicine ? String(medicine.qty) : "",
     unit: medicine?.unit ?? INVENTORY_UNITS[0],
     expiry: medicine?.expiry ?? "",
@@ -294,6 +294,8 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
   const [nurseQty, setNurseQty] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
+  // Keep a medicine's existing name selectable even if it isn't in the presets.
+  const nameOptions = Array.from(new Set([...MEDICINE_NAMES, ...(medicine?.name ? [medicine.name] : [])]));
   const unitOptions = Array.from(new Set([...INVENTORY_UNITS, form.unit]));
   const field = "w-full px-4 py-3 rounded-2xl border outline-none text-[15px]";
   const fieldStyle = { background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" };
@@ -362,7 +364,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
           </button>
         </div>
         <Field label="Medicine Name">
-          <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Glutathione 200mg/ml" className={field} style={fieldStyle} />
+          <Select value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} options={nameOptions.map((n) => ({ label: n, value: n }))} className={field} style={fieldStyle} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Master Quantity">

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import ExcelJS from "exceljs";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { medicineUsage } from "@/lib/booking-vials";
+import { medicineUsage, medicineUsages } from "@/lib/booking-vials";
 
 // Mirrors the search filter on the Medicines (Bulk) tab so the export matches what's on screen.
 export async function GET(req: NextRequest) {
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     orderBy: { name: "asc" },
   });
   const usage = await medicineUsage(items.map((m) => m.id));
+  const usages = await medicineUsages(items.map((m) => m.id));
 
   const rows = items
     .filter((m) => !search || m.name.toLowerCase().includes(search))
@@ -34,6 +35,11 @@ export async function GET(req: NextRequest) {
       // Same rule as the Reports view: show location alongside any nurse assignment, not just as a
       // fallback — a medicine can be both split across locations and assigned to nurses at once.
       const assignedTo = [nurses || null, locations || null].filter(Boolean).join(" · ") || "Unassigned";
+      // Only completed bookings count as "used" (matches the Used column); open/reserved drips aren't usage yet.
+      const usageText = (usages.get(m.id) ?? [])
+        .filter((u) => u.completed)
+        .map((u) => `${u.taskId} - ${u.nurseName ?? "Unassigned"} (${Math.round(u.qty * 100) / 100})`)
+        .join("; ");
       return {
         name: m.name,
         unit: m.unit,
@@ -43,6 +49,7 @@ export async function GET(req: NextRequest) {
         available: Math.max(0, Math.round((qty - used) * 100) / 100),
         locations,
         assignedTo,
+        usage: usageText,
       };
     });
 
@@ -57,6 +64,7 @@ export async function GET(req: NextRequest) {
     { header: "Available", key: "available", width: 10 },
     { header: "Locations", key: "locations", width: 30 },
     { header: "Assigned To", key: "assignedTo", width: 30 },
+    { header: "Usage", key: "usage", width: 45 },
   ];
   sheet.getRow(1).font = { bold: true };
 

@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import Select from "@/components/Select";
 import DatePicker from "@/components/DatePicker";
-import { INVENTORY_LOCATIONS, INVENTORY_UNITS } from "@/lib/constants";
+import { INVENTORY_LOCATIONS, INVENTORY_UNITS, VIAL_NAMES } from "@/lib/constants";
 import { inputStyle, Field, StatCard, fmt, useViewportHeight, UsageEntry, ReportItem } from "@/components/inventory-ui";
 import MedicinesTab from "@/components/MedicinesTab";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -387,7 +387,7 @@ function VialCard({
 function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses: NurseOption[]; onClose: () => void; onSaved: () => void }) {
   const isEdit = !!vial;
   const [form, setForm] = useState({
-    name: vial?.name ?? "",
+    name: vial?.name ?? VIAL_NAMES[0],
     serial: vial?.serial ?? "",
     qty: vial ? String(vial.qty) : "10",
     unit: vial?.unit ?? INVENTORY_UNITS[0],
@@ -395,7 +395,8 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
     nurseId: "",
     location: vial ? vial.location ?? "" : INVENTORY_LOCATIONS[0],
   });
-  // Keep a vial's existing unit/location selectable even if it isn't in the presets.
+  // Keep a vial's existing name/unit/location selectable even if it isn't in the presets.
+  const nameOptions = Array.from(new Set([...VIAL_NAMES, ...(vial?.name ? [vial.name] : [])]));
   const unitOptions = Array.from(new Set([...INVENTORY_UNITS, form.unit]));
   const locationOptions = Array.from(new Set([...INVENTORY_LOCATIONS, ...(vial?.location ? [vial.location] : [])]));
   const [saving, setSaving] = useState(false);
@@ -458,7 +459,9 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
-        <Field label="Vial Name"><input required value={form.name} onChange={set("name")} placeholder="e.g. Glutathione 500mg" className={field} style={fieldStyle} /></Field>
+        <Field label="Vial Name">
+          <Select value={form.name} onChange={pick("name")} options={nameOptions.map((n) => ({ label: n, value: n }))} className={field} style={fieldStyle} />
+        </Field>
         <Field label="Serial Number"><input required value={form.serial} onChange={set("serial")} placeholder="VL-XXXX" className={field} style={fieldStyle} /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Quantity"><input required type="number" min="0" step="0.5" value={form.qty} onChange={set("qty")} className={field} style={fieldStyle} /></Field>
