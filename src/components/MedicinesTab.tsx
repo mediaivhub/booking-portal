@@ -210,13 +210,15 @@ export default function MedicinesTab() {
             const available = Math.max(0, m.qty - m.used);
             const usedPct = m.qty > 0 ? Math.min(100, (m.used / m.qty) * 100) : 0;
             const expired = !!m.expiry && m.expiry < today;
-            const expiringSoon = !expired && !!m.expiry && m.expiry <= weekAway;
+            const daysLeft = m.expiry ? Math.round((new Date(m.expiry).getTime() - new Date(today).getTime()) / 86400000) : null;
+            const expiringSoon = !expired && daysLeft !== null && daysLeft <= 7;
+            const expiringLabel = daysLeft === 0 ? "Expires Today" : daysLeft === 1 ? "Expires in 1 Day" : `Expires in ${daysLeft} Days`;
             const badge = expired
               ? { label: "Expired", bg: "rgba(198,40,40,0.14)", color: "#c62828" }
               : available <= 0
                 ? { label: "Out of stock", bg: "rgba(198,40,40,0.14)", color: "#c62828" }
                 : expiringSoon
-                  ? { label: "Expiring Soon", bg: "#fff3e0", color: "#e65100" }
+                  ? { label: expiringLabel, bg: "#fff3e0", color: "#e65100" }
                   : m.qty > 0 && available / m.qty < 0.2
                     ? { label: "Low stock", bg: "#fff3e0", color: "#e65100" }
                     : { label: "In stock", bg: "rgba(39,174,96,0.14)", color: "#27ae60" };

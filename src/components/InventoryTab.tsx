@@ -273,7 +273,8 @@ function VialCard({
   const usedPct = v.qty > 0 ? Math.min(100, (v.used / v.qty) * 100) : 0;
   const today = new Date().toISOString().slice(0, 10);
   const expired = v.expiry ? v.expiry < today : false;
-  const expiringSoon = !expired && !!v.expiry && v.expiry <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const daysLeft = v.expiry ? Math.round((new Date(v.expiry).getTime() - new Date(today).getTime()) / 86400000) : null;
+  const expiringSoon = !expired && daysLeft !== null && daysLeft <= 7;
 
   // A vial goes to one nurse whole; picking another nurse moves it, "Unassigned" releases it.
   async function assign(nurseId: string) {
@@ -321,7 +322,7 @@ function VialCard({
             </span>
             {expiringSoon && (
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase" style={{ background: "#fff3e0", color: "#e65100" }}>
-                Expiring Soon
+                {daysLeft === 0 ? "Expires Today" : daysLeft === 1 ? "Expires in 1 Day" : `Expires in ${daysLeft} Days`}
               </span>
             )}
             {remaining <= 0 && v.qty > 0 && (
@@ -544,6 +545,12 @@ function ExpiringBanner({ view }: { view: "vials" | "medicines" }) {
     }, 200);
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const withDays = items.map((i) => ({
+    name: i.name,
+    daysLeft: Math.round((new Date(i.expiry!).getTime() - new Date(today).getTime()) / 86400000),
+  }));
+
   return (
     <div className="px-4 pt-4" style={{ animation: closing ? "fadeOut 0.2s ease forwards" : "fadeIn 0.2s ease" }}>
       <div
@@ -555,7 +562,8 @@ function ExpiringBanner({ view }: { view: "vials" | "medicines" }) {
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
         <p className="flex-1 text-[13px] font-semibold" style={{ color: "#e65100" }}>
-          {items.length} item{items.length === 1 ? "" : "s"} expiring within a week: {items.map((i) => i.name).join(", ")}
+          {items.length} item{items.length === 1 ? "" : "s"} expiring within a week:{" "}
+          {withDays.map((i) => `${i.name} (${i.daysLeft === 0 ? "today" : i.daysLeft === 1 ? "1 day" : `${i.daysLeft} days`})`).join(", ")}
         </p>
         <button onClick={dismiss} aria-label="Dismiss" className="p-1 shrink-0" style={{ color: "#e65100" }}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
