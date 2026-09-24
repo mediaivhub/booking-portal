@@ -125,8 +125,9 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
       return Number(bSoon) - Number(aSoon);
     });
 
-  const totalQty = vials.reduce((s, v) => s + v.qty, 0);
-  const totalUsed = vials.reduce((s, v) => s + v.used, 0);
+  // Stats reflect whatever's currently filtered, not the whole inventory.
+  const totalQty = filtered.reduce((s, v) => s + v.qty, 0);
+  const totalUsed = filtered.reduce((s, v) => s + v.used, 0);
 
   function exportVials() {
     const params: Record<string, string> = {};
@@ -200,14 +201,14 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
 
       {isAdmin ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <StatCard label="Vials" value={vials.length} color="var(--primary)" />
+          <StatCard label="Vials" value={filtered.length} color="var(--primary)" />
           <StatCard label="Total Qty" value={fmt(totalQty)} color="var(--text-1)" />
           <StatCard label="Used" value={fmt(totalUsed)} color="#e65100" />
           <StatCard label="Available" value={fmt(totalQty - totalUsed)} color="#27ae60" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          <StatCard label="Vials" value={vials.length} color="var(--primary)" />
+          <StatCard label="Vials" value={filtered.length} color="var(--primary)" />
           <StatCard label="Total Qty" value={fmt(totalQty)} color="#27ae60" />
         </div>
       )}

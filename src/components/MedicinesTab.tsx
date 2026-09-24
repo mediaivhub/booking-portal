@@ -99,10 +99,11 @@ export default function MedicinesTab() {
       const bSoon = !!b.expiry && b.expiry >= today && b.expiry <= weekAway;
       return Number(bSoon) - Number(aSoon);
     });
-  const totalQty = items.reduce((s, m) => s + m.qty, 0);
-  const totalUsed = items.reduce((s, m) => s + m.used, 0);
+  // Stats reflect whatever's currently filtered, not the whole inventory.
+  const totalQty = filtered.reduce((s, m) => s + m.qty, 0);
+  const totalUsed = filtered.reduce((s, m) => s + m.used, 0);
   // Stat totals only make sense in one unit; the app's default is ml.
-  const unit = items.length && items.every((m) => m.unit === items[0].unit) ? items[0].unit : "ml";
+  const unit = filtered.length && filtered.every((m) => m.unit === filtered[0].unit) ? filtered[0].unit : "ml";
 
   async function remove() {
     if (!toDelete) return;
@@ -146,7 +147,7 @@ export default function MedicinesTab() {
   return (
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <StatCard label="Medicines" value={items.length} color="var(--primary-text)" />
+        <StatCard label="Medicines" value={filtered.length} color="var(--primary-text)" />
         <StatCard label="Master Qty" value={`${fmt(totalQty)} ${unit}`} color="var(--text-1)" />
         <StatCard label="Used" value={`${fmt(totalUsed)} ${unit}`} color="#e65100" />
         <StatCard label="Available" value={`${fmt(totalQty - totalUsed)} ${unit}`} color="#27ae60" />
