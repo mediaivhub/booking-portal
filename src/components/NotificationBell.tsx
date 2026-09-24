@@ -26,7 +26,14 @@ export default function NotificationBell() {
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
       setSubscribed(!!sub);
+      // Re-register on every load, not just when the user first subscribes. Keeps the
+      // server's record in sync if it ever drifts (row cleared, subscription re-created
+      // by the OS, etc.) without requiring a manual toggle-off/on to notice and fix it.
+      if (sub) api.push.subscribe(sub.toJSON()).catch(() => {});
     });
+
+    // Opening the app at all counts as "seen" — clear the home-screen icon's red badge.
+    (navigator as Navigator & { clearAppBadge?: () => Promise<void> }).clearAppBadge?.()?.catch(() => {});
   }, []);
 
   async function toggle() {

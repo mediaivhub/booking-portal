@@ -271,7 +271,9 @@ function VialCard({
   const holder = v.assignments[0];
   const remaining = Math.max(0, v.qty - v.used);
   const usedPct = v.qty > 0 ? Math.min(100, (v.used / v.qty) * 100) : 0;
-  const expired = v.expiry ? v.expiry < new Date().toISOString().slice(0, 10) : false;
+  const today = new Date().toISOString().slice(0, 10);
+  const expired = v.expiry ? v.expiry < today : false;
+  const expiringSoon = !expired && !!v.expiry && v.expiry <= new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   // A vial goes to one nurse whole; picking another nurse moves it, "Unassigned" releases it.
   async function assign(nurseId: string) {
@@ -317,6 +319,11 @@ function VialCard({
             <span className="text-[11px] font-semibold" style={{ color: holder ? "#3b82f6" : "var(--text-3)" }}>
               Currently with: {holder ? holder.nurseName : v.location ?? "Unassigned"}
             </span>
+            {expiringSoon && (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase" style={{ background: "#fff3e0", color: "#e65100" }}>
+                Expiring Soon
+              </span>
+            )}
             {remaining <= 0 && v.qty > 0 && (
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase" style={{ background: "#fff3e0", color: "#e65100" }}>
                 USED UP
