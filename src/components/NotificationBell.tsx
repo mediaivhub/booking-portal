@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import { toast } from "./Toast";
 
@@ -16,6 +17,7 @@ export default function NotificationBell() {
   const [subscribed, setSubscribed] = useState(false);
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -76,21 +78,59 @@ export default function NotificationBell() {
   if (!supported || denied) return null;
 
   return (
-    <button
-      onClick={toggle}
-      disabled={busy}
-      title={subscribed ? "Turn off notifications" : "Enable notifications"}
-      className="p-2 rounded-lg flex disabled:opacity-50"
-      style={{ color: subscribed ? "#fff" : "rgba(255,255,255,0.5)" }}
-    >
-      {subscribed ? (
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 00-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" /></svg>
-      ) : (
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
-        </svg>
+    <>
+      <button
+        onClick={toggle}
+        disabled={busy}
+        title={subscribed ? "Turn off notifications" : "Enable notifications"}
+        className="p-2 rounded-lg flex disabled:opacity-50"
+        style={{ color: subscribed ? "#fff" : "rgba(255,255,255,0.5)" }}
+      >
+        {subscribed ? (
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 00-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" /></svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 01-3.46 0" />
+          </svg>
+        )}
+      </button>
+
+      {!subscribed && !bannerDismissed && createPortal(
+        <div
+          className="fixed left-3 right-3 z-40 flex items-center gap-3 rounded-2xl border p-3 shadow-lg"
+          style={{
+            bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)",
+            background: "var(--bg-card)",
+            borderColor: "var(--border)",
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" strokeWidth="2" className="shrink-0">
+            <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 01-3.46 0" />
+          </svg>
+          <p className="flex-1 text-[13px] font-medium" style={{ color: "var(--text-1)" }}>
+            Turn on notifications for bookings and stock alerts
+          </p>
+          <button
+            onClick={toggle}
+            disabled={busy}
+            className="px-3 py-1.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-50 shrink-0"
+            style={{ background: "var(--primary)" }}
+          >
+            {busy ? "..." : "Enable"}
+          </button>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            aria-label="Dismiss"
+            className="p-1 shrink-0"
+            style={{ color: "var(--text-3)" }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        </div>,
+        document.body
       )}
-    </button>
+    </>
   );
 }

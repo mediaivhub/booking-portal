@@ -508,6 +508,63 @@ function VialFormModal({ vial, nurses, onClose, onSaved }: { vial?: Vial; nurses
   );
 }
 
+const EXPIRY_BANNER_DISMISSED_KEY = "expiryBannerDismissedDate";
+
+// Scoped to whichever sub-tab is active — the Vials tab only warns about vials, the Medicines
+// tab only about medicines, each with its own dismiss state. Dismissing hides it for the rest
+// of the day; it comes back daily as long as something's still in that window (not yet expired).
+function ExpiringBanner({ view }: { view: "vials" | "medicines" }) {
+  const [items, setItems] = useState<{ name: string; expiry: string | null }[]>([]);
+  const [dismissed, setDismissed] = useState(true);
+  const [closing, setClosing] = useState(false);
+  const storageKey = `${EXPIRY_BANNER_DISMISSED_KEY}-${view}`;
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const weekAway = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    const soon = (expiry: string | null) => !!expiry && expiry >= today && expiry <= weekAway;
+
+    const load = view === "vials" ? api.inventory.list() : api.medicines.list();
+    load
+      .then((list: { name: string; expiry: string | null }[]) => setItems(list.filter((i) => soon(i.expiry))))
+      .catch(() => setItems([]));
+
+    setDismissed(localStorage.getItem(storageKey) === today);
+    setClosing(false);
+  }, [view, storageKey]);
+
+  if (dismissed || items.length === 0) return null;
+
+  function dismiss() {
+    setClosing(true);
+    setTimeout(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem(storageKey, today);
+      setDismissed(true);
+    }, 200);
+  }
+
+  return (
+    <div className="px-4 pt-4" style={{ animation: closing ? "fadeOut 0.2s ease forwards" : "fadeIn 0.2s ease" }}>
+      <div
+        className="flex items-center gap-3 rounded-2xl border p-3"
+        style={{ background: "#fff3e0", borderColor: "#e65100" }}
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e65100" strokeWidth="2" className="shrink-0">
+          <path d="M12 9v4M12 17h.01" />
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        <p className="flex-1 text-[13px] font-semibold" style={{ color: "#e65100" }}>
+          {items.length} item{items.length === 1 ? "" : "s"} expiring within a week: {items.map((i) => i.name).join(", ")}
+        </p>
+        <button onClick={dismiss} aria-label="Dismiss" className="p-1 shrink-0" style={{ color: "#e65100" }}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Admins switch between individual vials and the bulk (master) medicines held in the office.
 export default function InventoryTab({ isAdmin }: { isAdmin: boolean }) {
   const [view, setView] = useState<"vials" | "medicines">("vials");
@@ -515,6 +572,7 @@ export default function InventoryTab({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
+      <ExpiringBanner view={view} />
       <div className="px-4 pt-4">
         <div className="flex p-1 rounded-2xl" style={{ background: "var(--border)" }}>
           {([["vials", "Vials"], ["medicines", "Medicines (Bulk)"]] as const).map(([key, label]) => (
