@@ -48,6 +48,7 @@ export default function MedicinesTab() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Medicine | null>(null);
@@ -77,9 +78,14 @@ export default function MedicinesTab() {
     { label: "All Status", value: "" },
     { label: "Expired", value: "expired" },
   ];
+  const nameOptions = [
+    { label: "All Medicines", value: "" },
+    ...Array.from(new Set(items.map((m) => m.name))).sort().map((n) => ({ label: n, value: n })),
+  ];
   const filtered = items
     .filter((m) => {
       if (!m.name.toLowerCase().includes(q)) return false;
+      if (nameFilter && m.name !== nameFilter) return false;
       const expired = !!m.expiry && m.expiry < today;
       // Expired medicines clutter the default view — they only show up once "Expired" is picked.
       if (statusFilter === "expired") return expired;
@@ -181,14 +187,23 @@ export default function MedicinesTab() {
         </div>
       </div>
 
-      <input
-        type="text"
-        placeholder="Search medicine..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
-        style={inputStyle}
-      />
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Search medicine..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border outline-none text-sm"
+          style={inputStyle}
+        />
+        <Select
+          value={nameFilter}
+          onChange={setNameFilter}
+          options={nameOptions}
+          className="px-4 py-2.5 rounded-2xl border outline-none text-sm"
+          style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" }}
+        />
+      </div>
 
       <Select
         value={statusFilter}
