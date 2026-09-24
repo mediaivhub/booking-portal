@@ -40,4 +40,9 @@ const optionalEmail = ["SENDGRID_API_KEY", "SENDGRID_FROM_EMAIL"];
 for (const name of optionalEmail) {
   console.log(`${name}:`, has(name) ? "set" : "not set (booking-assignment emails disabled)");
 }
+
+const optionalCron = ["CRON_SECRET"];
+for (const name of optionalCron) {
+  console.log(`${name}:`, has(name) ? "set" : "not set (/api/cron/expiry-check will reject all requests)");
+}
 console.log("────────────────────────────\n");

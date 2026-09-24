@@ -47,13 +47,17 @@ export default function MedicinesTab() {
   const [nurses, setNurses] = useState<NurseOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Medicine | null>(null);
   const [toDelete, setToDelete] = useState<Medicine | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showReports, setShowReports] = useState(false);
-  const [today] = useState(() => new Date().toISOString().slice(0, 10));
+  const [{ today, weekAway }] = useState(() => ({
+    today: new Date().toISOString().slice(0, 10),
+    weekAway: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+  }));
 
   const load = useCallback(() => {
     return api.medicines
@@ -69,7 +73,26 @@ export default function MedicinesTab() {
   }, [load]);
 
   const q = search.toLowerCase();
-  const filtered = items.filter((m) => m.name.toLowerCase().includes(q));
+  const statusOptions = [
+    { label: "All Status", value: "" },
+    { label: "Expired", value: "expired" },
+  ];
+  const filtered = items
+    .filter((m) => {
+      if (!m.name.toLowerCase().includes(q)) return false;
+      const expired = !!m.expiry && m.expiry < today;
+      // Expired medicines clutter the default view — they only show up once "Expired" is picked.
+      if (statusFilter === "expired") return expired;
+      if (statusFilter === "") return !expired;
+      return true;
+    })
+    // Within the default view, surface anything expiring in the next week first.
+    .sort((a, b) => {
+      if (statusFilter !== "") return 0;
+      const aSoon = !!a.expiry && a.expiry >= today && a.expiry <= weekAway;
+      const bSoon = !!b.expiry && b.expiry >= today && b.expiry <= weekAway;
+      return Number(bSoon) - Number(aSoon);
+    });
   const totalQty = items.reduce((s, m) => s + m.qty, 0);
   const totalUsed = items.reduce((s, m) => s + m.used, 0);
   // Stat totals only make sense in one unit; the app's default is ml.
@@ -165,6 +188,14 @@ export default function MedicinesTab() {
         onChange={(e) => setSearch(e.target.value)}
         className="w-full px-3 py-2.5 rounded-xl border outline-none text-sm"
         style={inputStyle}
+      />
+
+      <Select
+        value={statusFilter}
+        onChange={setStatusFilter}
+        options={statusOptions}
+        className="px-4 py-2.5 rounded-2xl border outline-none text-sm"
+        style={{ background: "var(--bg-card)", borderColor: "var(--border)", color: "var(--text-1)" }}
       />
 
       {loading ? (

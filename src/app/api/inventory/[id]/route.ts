@@ -20,7 +20,11 @@ export async function PATCH(
   if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim();
   if (typeof body.unit === "string" && body.unit.trim()) data.unit = body.unit.trim();
   if ("location" in body) data.location = body.location ? String(body.location).trim() : null;
-  if ("expiry" in body) data.expiry = body.expiry ? new Date(body.expiry) : null;
+  // Editing the expiry re-arms the expiry-check cron so it can notify again if needed.
+  if ("expiry" in body) {
+    data.expiry = body.expiry ? new Date(body.expiry) : null;
+    data.expiryNotifiedAt = null;
+  }
   if (typeof body.serial === "string" && body.serial.trim()) {
     const serial = body.serial.trim();
     const clash = await prisma.inventoryItem.findFirst({ where: { serial, NOT: { id } } });

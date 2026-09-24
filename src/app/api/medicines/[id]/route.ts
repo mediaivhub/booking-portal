@@ -18,7 +18,11 @@ export async function PATCH(
 
   if (typeof body.name === "string" && body.name.trim()) data.name = body.name.trim();
   if (typeof body.unit === "string" && body.unit.trim()) data.unit = body.unit.trim();
-  if ("expiry" in body) data.expiry = body.expiry ? new Date(body.expiry) : null;
+  // Editing the expiry re-arms the expiry-check cron so it can notify again if needed.
+  if ("expiry" in body) {
+    data.expiry = body.expiry ? new Date(body.expiry) : null;
+    data.expiryNotifiedAt = null;
+  }
   if (body.qty !== undefined) {
     const qty = Number(body.qty);
     if (!Number.isFinite(qty) || qty < 0) return Response.json({ error: "Invalid quantity" }, { status: 400 });

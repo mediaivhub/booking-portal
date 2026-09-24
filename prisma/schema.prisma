@@ -150,16 +150,17 @@ model PushSubscription {
 }
 
 model InventoryItem {
-  id        Int       @id @default(autoincrement())
-  name      String    @db.VarChar(150)
-  serial    String    @unique @db.VarChar(50)
-  qty       Decimal   @db.Decimal(10, 2)
-  unit      String    @default("ml") @db.VarChar(20)
-  location  String?   @db.VarChar(100)
-  expiry    DateTime? @db.Date
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(150)
+  serial           String    @unique @db.VarChar(50)
+  qty              Decimal   @db.Decimal(10, 2)
+  unit             String    @default("ml") @db.VarChar(20)
+  location         String?   @db.VarChar(100)
+  expiry           DateTime? @db.Date
+  expiryNotifiedAt DateTime? @map("expiry_notified_at")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   assignments  InventoryAssignment[]
   bookingVials BookingVial[]
@@ -168,14 +169,15 @@ model InventoryItem {
 }
 
 model BulkMedicine {
-  id        Int       @id @default(autoincrement())
-  name      String    @db.VarChar(150)
-  qty       Decimal   @db.Decimal(10, 2)
-  unit      String    @default("ml") @db.VarChar(20)
-  expiry    DateTime? @db.Date
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(150)
+  qty              Decimal   @db.Decimal(10, 2)
+  unit             String    @default("ml") @db.VarChar(20)
+  expiry           DateTime? @db.Date
+  expiryNotifiedAt DateTime? @map("expiry_notified_at")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   bookingMedicines BookingMedicine[]
   locations        BulkMedicineLocation[]

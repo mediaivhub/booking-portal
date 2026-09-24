@@ -66,9 +66,10 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
   }, [load, isAdmin]);
 
   const q = search.toLowerCase();
-  const [{ today, soon }] = useState(() => ({
+  const [{ today, soon, weekAway }] = useState(() => ({
     today: new Date().toISOString().slice(0, 10),
     soon: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+    weekAway: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
   }));
   const locationOptions = [
     { label: "All Locations", value: "" },
@@ -111,9 +112,18 @@ function VialsTab({ isAdmin }: { isAdmin: boolean }) {
       case "unassigned": return v.assignments.length === 0;
       case "soon": return !!v.expiry && !expired && v.expiry <= soon;
       case "expired": return expired;
+      // Expired vials clutter the default view — they only show up once "Expired" is picked.
+      case "": return !expired;
       default: return true;
     }
-  });
+  })
+    // Within the default view, surface anything expiring in the next week first.
+    .sort((a, b) => {
+      if (statusFilter !== "") return 0;
+      const aSoon = !!a.expiry && a.expiry >= today && a.expiry <= weekAway;
+      const bSoon = !!b.expiry && b.expiry >= today && b.expiry <= weekAway;
+      return Number(bSoon) - Number(aSoon);
+    });
 
   const totalQty = vials.reduce((s, v) => s + v.qty, 0);
   const totalUsed = vials.reduce((s, v) => s + v.used, 0);
