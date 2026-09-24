@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
       used: v.used,
       available: Math.max(0, Math.round((v.qty - v.used) * 100) / 100),
       assignedTo,
-      usage: v.usage.map((u) => `${u.taskId} - ${u.nurseName ?? "Unassigned"} (${Math.round(u.qty * 100) / 100})`).join("; ") || "",
+      usage: v.usage.map((u) => `${Math.round(u.qty * 100) / 100} ${v.unit} used in ${u.taskId} - ${u.nurseName ?? "Unassigned"}`).join("; ") || "",
     });
   }
 

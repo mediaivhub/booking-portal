@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       // Only completed bookings count as "used" (matches the Used column); open/reserved drips aren't usage yet.
       const usageText = (usages.get(m.id) ?? [])
         .filter((u) => u.completed)
-        .map((u) => `${u.taskId} - ${u.nurseName ?? "Unassigned"} (${Math.round(u.qty * 100) / 100})`)
+        .map((u) => `${Math.round(u.qty * 100) / 100} ${m.unit} used in ${u.taskId} - ${u.nurseName ?? "Unassigned"}`)
         .join("; ");
       return {
         name: m.name,
