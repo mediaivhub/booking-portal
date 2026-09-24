@@ -319,7 +319,19 @@ export default function MedicinesTab() {
           loading={deleting}
         />
       )}
-      {editing && <MedicineFormModal medicine={editing} nurses={[]} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {editing && (
+        <MedicineFormModal
+          medicine={editing}
+          // Active nurses, plus anyone inactive who still holds a split here — otherwise saving
+          // the edit would silently drop their existing assignment since they'd never be submitted.
+          nurses={[
+            ...nurses.filter((n) => n.isActive),
+            ...nurses.filter((n) => !n.isActive && editing.assignments.some((a) => a.nurseId === n.id)),
+          ]}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
       {showReports && <InventoryReports title="Medicine Reports" items={reportItems} onClose={() => setShowReports(false)} />}
     </div>
   );
@@ -340,9 +352,14 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
     unit: medicine?.unit ?? INVENTORY_UNITS[0],
     expiry: medicine?.expiry ?? "",
   });
-  // Split rows only apply when creating a new medicine; keyed by location/nurse id, kept as strings for the inputs.
-  const [locationQty, setLocationQty] = useState<Record<string, string>>({});
-  const [nurseQty, setNurseQty] = useState<Record<number, string>>({});
+  // Split rows, keyed by location/nurse id, kept as strings for the inputs. Pre-filled from the
+  // medicine's existing split when editing, so it can be adjusted rather than starting blank.
+  const [locationQty, setLocationQty] = useState<Record<string, string>>(() =>
+    Object.fromEntries((medicine?.locations ?? []).map((l) => [l.location, String(l.qty)]))
+  );
+  const [nurseQty, setNurseQty] = useState<Record<number, string>>(() =>
+    Object.fromEntries((medicine?.assignments ?? []).map((a) => [a.nurseId, String(a.qty)]))
+  );
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
   // Keep a medicine's existing name selectable even if it isn't in the presets.
@@ -367,11 +384,11 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
     setSaving(true);
     try {
       const data: Record<string, unknown> = { ...form, qty: Number(form.qty), expiry: form.expiry || null };
+      data.locations = INVENTORY_LOCATIONS.map((location) => ({ location, qty: Number(locationQty[location] || 0) }));
+      data.nurseAssignments = nurses.map((n) => ({ nurseId: n.id, qty: Number(nurseQty[n.id] || 0) }));
       if (medicine) {
         await api.medicines.update(medicine.id, data);
       } else {
-        data.locations = INVENTORY_LOCATIONS.map((location) => ({ location, qty: Number(locationQty[location] || 0) }));
-        data.nurseAssignments = nurses.map((n) => ({ nurseId: n.id, qty: Number(nurseQty[n.id] || 0) }));
         await api.medicines.create(data);
       }
       toast(isEdit ? "Medicine updated" : "Medicine added");
@@ -429,8 +446,7 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
           <DatePicker value={form.expiry} onChange={(v) => setForm((f) => ({ ...f, expiry: v }))} className={field} style={fieldStyle} />
         </Field>
 
-        {!isEdit && (
-          <>
+        <>
             <div className="pt-1 border-t" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center justify-between mt-4 mb-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>Total Allocated</p>
@@ -472,7 +488,6 @@ function MedicineFormModal({ medicine, nurses, onClose, onSaved }: { medicine?: 
               </div>
             )}
           </>
-        )}
 
         <button type="submit" disabled={saving} className="w-full py-4 rounded-2xl text-base font-semibold text-white disabled:opacity-50" style={{ background: "var(--primary)" }}>
           {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Medicine"}
