@@ -25,7 +25,8 @@ export default function AssignDropdown({ nurses, currentNurseId, onSelect, onClo
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[100]" onClick={onClose}>
+    // Opened from within BookingDetail, which sits at z-[200] — this must render above that.
+    <div className="fixed inset-0 z-[210]" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
         className="absolute bottom-0 left-0 right-0 rounded-t-2xl animate-[slideUp_0.25s_ease] flex flex-col"

@@ -19,7 +19,8 @@ interface Props {
 
 export default function StatusDropdown({ currentStatus, onSelect, onClose }: Props) {
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center" onClick={onClose}>
+    // Opened from within BookingDetail, which sits at z-[200] — this must render above that.
+    <div className="fixed inset-0 z-[210] flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
         className="relative w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 animate-[slideUp_0.25s_ease]"
