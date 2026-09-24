@@ -41,8 +41,9 @@ interface NurseOption {
   isActive: boolean;
 }
 
-// Bulk "master" medicines held in the office inventory (admin only).
-export default function MedicinesTab() {
+// Bulk "master" medicines held in the office inventory. Admins manage everything; nurses see
+// a read-only view of just what's been assigned to them.
+export default function MedicinesTab({ isAdmin }: { isAdmin: boolean }) {
   const [items, setItems] = useState<Medicine[]>([]);
   const [nurses, setNurses] = useState<NurseOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,8 +71,8 @@ export default function MedicinesTab() {
 
   useEffect(() => {
     load();
-    api.nurses.list().then(setNurses).catch(() => {});
-  }, [load]);
+    if (isAdmin) api.nurses.list().then(setNurses).catch(() => {});
+  }, [load, isAdmin]);
 
   const q = search.toLowerCase();
   const statusOptions = [
@@ -146,46 +147,57 @@ export default function MedicinesTab() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <StatCard label="Medicines" value={filtered.length} color="var(--primary-text)" />
-        <StatCard label="Master Qty" value={`${fmt(totalQty)} ${unit}`} color="var(--text-1)" />
-        <StatCard label="Used" value={`${fmt(totalUsed)} ${unit}`} color="#e65100" />
-        <StatCard label="Available" value={`${fmt(totalQty - totalUsed)} ${unit}`} color="#27ae60" />
-      </div>
+      {isAdmin ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <StatCard label="Medicines" value={filtered.length} color="var(--primary-text)" />
+          <StatCard label="Master Qty" value={`${fmt(totalQty)} ${unit}`} color="var(--text-1)" />
+          <StatCard label="Used" value={`${fmt(totalUsed)} ${unit}`} color="#e65100" />
+          <StatCard label="Available" value={`${fmt(totalQty - totalUsed)} ${unit}`} color="#27ae60" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <StatCard label="Medicines" value={filtered.length} color="var(--primary-text)" />
+          <StatCard label="Total Qty" value={`${fmt(totalQty)} ${unit}`} color="#27ae60" />
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-bold" style={{ color: "var(--text-1)" }}>Master Medicines (Office Inventory)</h2>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => setShowReports(true)}
-            title="Reports"
-            className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 17V9M13 17v-5M17 17v-9M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          </button>
-          <button
-            onClick={exportMedicines}
-            title="Export"
-            className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
-            style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setShowAdd(true)}
-            className="px-3 py-2 rounded-xl border-2 text-[13px] font-semibold"
-            style={{ borderColor: "var(--primary-text)", color: "var(--primary-text)" }}
-          >
-            + Add Medicine
-          </button>
-        </div>
+        <h2 className="text-base font-bold" style={{ color: "var(--text-1)" }}>
+          {isAdmin ? "Master Medicines (Office Inventory)" : "My Medicines"}
+        </h2>
+        {isAdmin && (
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => setShowReports(true)}
+              title="Reports"
+              className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 17V9M13 17v-5M17 17v-9M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              onClick={exportMedicines}
+              title="Export"
+              className="h-9 w-9 rounded-xl flex items-center justify-center border transition-colors hover:brightness-90"
+              style={{ borderColor: "var(--border)", color: "var(--text-2)" }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-3 py-2 rounded-xl border-2 text-[13px] font-semibold"
+              style={{ borderColor: "var(--primary-text)", color: "var(--primary-text)" }}
+            >
+              + Add Medicine
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -218,7 +230,11 @@ export default function MedicinesTab() {
         <p className="text-center text-sm py-8" style={{ color: "var(--text-3)" }}>Loading...</p>
       ) : filtered.length === 0 ? (
         <p className="text-center text-sm py-8" style={{ color: "var(--text-3)" }}>
-          {items.length === 0 ? "No medicines yet. Add one to get started." : "No matching medicines."}
+          {items.length === 0
+            ? isAdmin
+              ? "No medicines yet. Add one to get started."
+              : "No medicines assigned to you."
+            : "No matching medicines."}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -241,48 +257,59 @@ export default function MedicinesTab() {
 
             return (
               <div key={m.id} className="rounded-2xl border p-3 h-full" style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}>
-                <div className="flex items-start justify-between cursor-pointer" onClick={() => setExpanded(expanded === m.id ? null : m.id)}>
+                <div
+                  className={`flex items-start justify-between ${isAdmin ? "cursor-pointer" : ""}`}
+                  onClick={isAdmin ? () => setExpanded(expanded === m.id ? null : m.id) : undefined}
+                >
                   <div>
                     <p className="text-[15px] font-semibold" style={{ color: "var(--text-1)" }}>{m.name}</p>
                     <p className="text-[11px]" style={{ color: expired ? "#c62828" : "var(--text-3)" }}>
                       Bulk · No Serial · {expired ? "Expired" : "Exp"}: {m.expiry ?? "—"}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: badge.bg, color: badge.color }}>
-                      {badge.label}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setToDelete(m); }}
-                      className="text-[11px] font-semibold"
-                      style={{ color: "#c62828" }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-2 w-full h-2 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
-                  <div className="h-full" style={{ width: `${usedPct}%`, background: "#e65100" }} />
-                  <div className="h-full" style={{ width: `${100 - usedPct}%`, background: "#27ae60" }} />
-                </div>
-                <div className="flex justify-between mt-1.5 text-[11px] font-semibold">
-                  <span style={{ color: "#27ae60" }}>{fmt(available)} {m.unit} available</span>
-                  <span style={{ color: "var(--text-3)" }}>Master: {fmt(m.qty)} {m.unit}</span>
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  {/* Open bookings only reserve stock; a completed booking makes it "used". */}
-                  {m.usages.map((u) => (
-                    <p key={u.bookingId} className="text-[11px] font-semibold" style={{ color: u.completed ? "#e65100" : "#3b82f6" }}>
-                      {fmt(u.qty)} {m.unit} {u.completed ? "used" : "assigned"} for {u.taskId}
-                    </p>
-                  ))}
-                  {m.used === 0 && (
-                    <p className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>0 {m.unit} used for booking</p>
+                  {isAdmin && (
+                    <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider" style={{ background: badge.bg, color: badge.color }}>
+                        {badge.label}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setToDelete(m); }}
+                        className="text-[11px] font-semibold"
+                        style={{ color: "#c62828" }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {expanded === m.id && (
+                {isAdmin ? (
+                  <>
+                    <div className="mt-2 w-full h-2 rounded-full overflow-hidden flex" style={{ background: "var(--border)" }}>
+                      <div className="h-full" style={{ width: `${usedPct}%`, background: "#e65100" }} />
+                      <div className="h-full" style={{ width: `${100 - usedPct}%`, background: "#27ae60" }} />
+                    </div>
+                    <div className="flex justify-between mt-1.5 text-[11px] font-semibold">
+                      <span style={{ color: "#27ae60" }}>{fmt(available)} {m.unit} available</span>
+                      <span style={{ color: "var(--text-3)" }}>Master: {fmt(m.qty)} {m.unit}</span>
+                    </div>
+                    <div className="mt-1 space-y-0.5">
+                      {/* Open bookings only reserve stock; a completed booking makes it "used". */}
+                      {m.usages.map((u) => (
+                        <p key={u.bookingId} className="text-[11px] font-semibold" style={{ color: u.completed ? "#e65100" : "#3b82f6" }}>
+                          {fmt(u.qty)} {m.unit} {u.completed ? "used" : "assigned"} for {u.taskId}
+                        </p>
+                      ))}
+                      {m.used === 0 && (
+                        <p className="text-[11px] font-semibold" style={{ color: "var(--text-3)" }}>0 {m.unit} used for booking</p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[13px] font-semibold mt-2" style={{ color: "#27ae60" }}>{fmt(m.qty)} {m.unit} with you</p>
+                )}
+
+                {isAdmin && expanded === m.id && (
                   <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: "var(--border)" }}>
                     {m.locations.length > 0 && (
                       <p className="text-[11px]" style={{ color: "var(--text-3)" }}>

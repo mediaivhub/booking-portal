@@ -574,10 +574,10 @@ function ExpiringBanner({ view }: { view: "vials" | "medicines" }) {
   );
 }
 
-// Admins switch between individual vials and the bulk (master) medicines held in the office.
+// Everyone switches between individual vials and the bulk (master) medicines — admins get full
+// management of both, nurses get a read-only view scoped to just what's assigned to them.
 export default function InventoryTab({ isAdmin }: { isAdmin: boolean }) {
   const [view, setView] = useState<"vials" | "medicines">("vials");
-  if (!isAdmin) return <VialsTab isAdmin={false} />;
 
   return (
     <div>
@@ -596,7 +596,7 @@ export default function InventoryTab({ isAdmin }: { isAdmin: boolean }) {
           ))}
         </div>
       </div>
-      {view === "vials" ? <VialsTab isAdmin /> : <MedicinesTab />}
+      {view === "vials" ? <VialsTab isAdmin={isAdmin} /> : <MedicinesTab isAdmin={isAdmin} />}
     </div>
   );
 }
